@@ -16,9 +16,11 @@ output:
 knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
 ```
 
-```{r}
+```{r message=FALSE}
 library(rio)
 library(tidyverse)
+library(AER)
+library(ggthemes)
 ```
 ```{r}
 df <- import("dutch_coffee.dta")
@@ -35,6 +37,13 @@ df <- df %>% mutate(time = year + month/12)
 
 Present and discuss summary statistics of the data. Show and describe the following relationships: (a) per capita consumption of roasted coffee and the price of roasted coffee, (b) consumption of roasted coffee and price of tea, (c) price of roasted coffee and price of labor, (d) price of roasted coffee and price of tea. Comment if you observe any clear time trends.
 
+### Summary Table
+```{r}
+#summary(df$cprice)
+sapply(select(df, cprice, tprice, wprice, qu), summary)
+```
+
+
 ### Per capita consumption of roasted coffe and price of roasted coffee
 ```{r}
 # descriptives are important!
@@ -43,6 +52,11 @@ Present and discuss summary statistics of the data. Show and describe the follow
 df %>% ggplot(aes(x = time, y = qu)) +
   geom_line() +
   labs(y = "Quantity", x = "Year", title = "Per capita consumption of roasted coffee")
+
+df %>% ggplot(aes(x = time, y = cprice)) +
+  geom_line() +
+  theme_economist() + scale_colour_economist() +
+  labs(y = "Price", x = "Year", title = "Price of roasted coffee")
 ```
 ```{r}
 df <- df %>% mutate(coffee = cprice/cprice[1]*100,
@@ -76,6 +90,14 @@ df %>% ggplot(aes(x = time, y = wprice)) +
 ## Supply and demand shifts
 Start from the data that we have.
 
+Valid instrument, corr(zx) > 0, E(z epsilon) = 0.
+How to find instruments? 
+
+Supply shift: wages, prices of beans
+
+Demand shift: 
+
+
 ## Log linear demand estimation
 $log(Q) = \beta_0 + \beta_1 log(P) + \varepsilon$
 $Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
@@ -83,6 +105,49 @@ $\beta_1 = \frac{dQ}{dP}\frac{P}$
 
 ## One major concern
 
+ivreg
+
 ## Degree of competition
+```{r}
+c0 = 4
+h = 1.19
+df %>% mutate(c = c0 + h*bprice) # we know the cost already
+```
+
+### Lerner index
+$L = \frac{P-c}{P}$
+```{r}
+df <- df %>% mutate(L = (cprice - c)/cprice)
+
+```
+
+
+### Adjusted Lerner index
+How general is the equality with lambda?
+$L_\eta = \frac{P-c}{P} \hat{\eta}$
+
+```{r}
+# eta = from favourite specification
+df <- df %>% mutate(L_adj = eta * (cprice - c)/cprice)
+```
+```{r}
+# Summary statistics for both and seasonal variation (plot)
+sapply(select(df, L, L_adj), summary)
+```
 
 ## Conduct parameter
+Estimate for the entire period
+$P = \frac{\eta c}{\eta - \lambda}$
+$P = b*c$, estimate $\hat{b}$ from a regression and solve for lambda:
+
+$\hat{b} = \frac{\eta}{\eta - \hat{\lambda}}$
+
+
+```{r}
+lm(cprice ~ cost + 0) # plus 0 for no intercept?
+lm(cprice ~ cost + 0) # add controls
+# obtain estimate of b
+```
+
+$\lambda$ is a measure of number of identical firms. 
+
