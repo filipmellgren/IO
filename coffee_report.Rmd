@@ -57,26 +57,14 @@ sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary)
 cormatdf <- df %>% select(Coffee, Quantity, Bean, Tea, Wage)
 cormat <- round(cor(cormatdf),2)
 melted_cormat <- melt(cormat)
-ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
-  geom_tile() + theme_economist() + scale_colour_economist()
-```
 
+melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + theme_economist() + scale_colour_economist() +
+  labs(title = "Correlation matrix")
+```
 
 
 ### Per capita consumption of roasted coffe and price of roasted coffee
-```{r}
-# descriptives are important!
-# Plot all the time series in separate graphs
-# a) per capita consumption of roasted coffee and price of roasted coffee
-df %>% ggplot(aes(x = time, y = Quantity)) +
-  geom_line() +
-  labs(y = "Quantity", x = "Year", title = "Per capita consumption of roasted coffee")
-
-df %>% ggplot(aes(x = time, y = Coffee)) +
-  geom_line() +
-  theme_economist() + scale_colour_economist() +
-  labs(y = "Price", x = "Year", title = "Price of roasted coffee")
-```
 
 ```{r}
 # Coffee and tea and quantity indexed
@@ -98,23 +86,15 @@ cor(df$Coffee, df$Quantity)
 cor(df$Tea, df$Quantity)
 ```
 ```{r}
-df %>% gather(`price roasted coffee`, `price coffee beans`, key = "index", value = "price") %>% 
+df %>% gather(`price roasted coffee`, `price coffee beans`, key = "index", 
+              value = "price") %>% 
   ggplot(aes(x = time, y = price, color = index )) +
   geom_line() +
   theme_economist() + scale_colour_economist() +
-  labs(y = "Indexed price", x = "Year", title = "Roasted coffee prices depend heavily on bean prices")
+  labs(y = "Indexed price", x = "Year", 
+       title = "Bean prices hit roasted prices hard...",
+       subtitle = "...but some of the impact is absorbed elsewhere" )
 ```
-
-### Consumption of roasted coffee and price of tea
-```{r}
-# consumption of roasted coffee and price of tea
-df %>% ggplot(aes(x = time, y = Tea)) +
-  geom_line() +
-  labs(y = "Price", x = "Year", title = "Price of tea")
-
-```
-
-
 
 ### c and d
 ```{r}
@@ -127,24 +107,12 @@ df %>% gather(`roasted coffee`, tea, wages, key = "Index", value = "price") %>%
   geom_line() +
   theme_economist() + scale_colour_economist() + 
   labs(y = "Indexed price", x = "Year", 
-       title = "Coffee price jitters: wages and tea prices unaffected")
+       title = "Caffeine shock...",
+       subtitle = "...but wages and tea prices left unaffected")
 ```
 
-```{r}
 
-```
-```{r}
-# price of roasted coffee and price of labor
-df %>% ggplot(aes(x = time, y = Wage)) +
-  geom_line() +
-  labs(y = "Price", x = "Year", title = "Wages over time")
-
-```
-```{r}
-# price of roasted coffee and price of tea
-
-```
-## Regress
+## Regressions and demand estimation
 ```{r}
 df <- df %>% mutate(Coffee = Coffee / oprice,
               Wage = Wage / oprice,
@@ -153,24 +121,21 @@ df <- df %>% mutate(Coffee = Coffee / oprice,
 no_controls <- lm(log(Quantity) ~ log(Coffee), data = df)
 quarter_controls <- lm(log(Quantity) ~ log(Coffee) + q1 + q2 + q3, data = df)
 ```
-
-```{r results="asis"}
-stargazer(no_controls, quarter_controls, header = FALSE)
-```
-
-## Supply and demand shifts
-Start from the data that we have.
-
-Valid instrument, corr(zx) > 0, E(z epsilon) = 0.
-How to find instruments? 
-
-Supply shift: wages, prices of beans
-
-Demand shift: 
-
-
-## Log linear demand estimation
+First, we run a regression without any controls
 $log(Q) = \beta_0 + \beta_1 log(P) + \varepsilon$
+
+Second
+$log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \varepsilon$
+
+Where $Q$ are quarterly dummies.
+
+Third,
+$log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \beta_3* T + \varepsilon$
+
+where $T$ denotes tea.
+
+Finally, we run the regression 
+$log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \beta_3* T + \varepsilon$
 
 $Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
 
@@ -185,6 +150,18 @@ income_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea) +
 stargazer(no_controls, quarter_controls, tea_control, income_control, 
           header = FALSE, type = "text")
 ```
+
+## Supply and demand shifters
+Start from the data that we have.
+
+Valid instrument, corr(zx) > 0, E(z epsilon) = 0.
+How to find instruments? 
+
+Supply shift: wages, prices of beans
+
+Demand shift: 
+
+
 
 
 ## One major concern
