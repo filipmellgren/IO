@@ -41,7 +41,8 @@ df <- df %>% rename(Quantity = qu,
                     Coffee = cprice, 
                     Tea = tprice,
                     Wage = wprice, 
-                    Bean = bprice)
+                    Bean = bprice,
+                    Income = incom)
 ```
 
 ## Summary statistics
@@ -51,16 +52,20 @@ We begin by showing som esumamry statistics,
 ### Summary Table
 ```{r}
 #summary(df$Coffee)
-xtable(sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary))
+xtable(sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary)%>% t())
 ```
 ```{r}
-cormatdf <- df %>% select(Coffee, Quantity, Bean, Tea, Wage)
+cormatdf <- df %>% select(Coffee, Quantity, Bean, Tea, Wage, Income)
 cormat <- round(cor(cormatdf),2)
+
 melted_cormat <- melt(cormat)
 
 melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) + 
   geom_tile() + theme_economist() + scale_colour_economist() +
-  labs(title = "Correlation matrix")
+  labs(title = "Correlation matrix", y = " ", x = " ") +
+  scale_fill_gradient2(low = "#336666", high = "#664033", mid = "white", 
+   midpoint = 0, limit = c(-1,1), space = "Lab", 
+    name="Pearson\nCorrelation")
 ```
 
 
@@ -68,16 +73,16 @@ melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) +
 
 ```{r}
 # Coffee and tea and quantity indexed
-df <- df %>% mutate("price roasted coffee" = Coffee/Coffee[1]*100,
-              "price tea" = Tea/Tea[1]*100,
-              "pc roasted coffee consumption" = Quantity/Quantity[1]*100,
+df <- df %>% mutate("coffee price" = Coffee/Coffee[1]*100,
+              "tea price" = Tea/Tea[1]*100,
+              "pc coffee cons." = Quantity/Quantity[1]*100,
               "price coffee beans" = Bean/Bean[1]*100) 
 
-df %>% gather(`price roasted coffee`, `price tea`, `pc roasted coffee consumption`, key = "index", value = "price") %>% 
+df %>% gather(`coffee price`, `tea price`, `pc coffee cons.`, key = "index", value = "price") %>% 
   ggplot(aes(x = time, y = price, color = index )) +
   geom_line() +
   theme_economist() + scale_colour_economist() +
-  labs(y = "Indexed price and consumption", x = "Year", title = "No obvious correlations")
+  labs(y = "Indexed price and consumption", x = "Year", title = "Volatility in consumption...", subtitle = "...Is seemingly, unrelated to the relative price of coffee and tea")
 ```
 ```{r}
 # Calculate correlations
@@ -86,14 +91,13 @@ cor(df$Coffee, df$Quantity)
 cor(df$Tea, df$Quantity)
 ```
 ```{r}
-df %>% gather(`price roasted coffee`, `price coffee beans`, key = "index", 
+df %>% rename(`Roasted coffee` = Coffee, `Coffee bean` = Bean) %>% gather(`Roasted coffee`, `Coffee bean`, key = "Series", 
               value = "price") %>% 
-  ggplot(aes(x = time, y = price, color = index )) +
+  ggplot(aes(x = time, y = price, color = Series )) +
   geom_line() +
   theme_economist() + scale_colour_economist() +
-  labs(y = "Indexed price", x = "Year", 
-       title = "Bean prices hit roasted prices hard...",
-       subtitle = "...but some of the impact is absorbed elsewhere" )
+  labs(y = "USD per kg", x = "Year", 
+       title = "Bean price spike hits roasted prices hard")
 ```
 
 ### c and d
@@ -106,7 +110,7 @@ df %>% gather(`roasted coffee`, tea, wages, key = "Index", value = "price") %>%
   ggplot(aes(x = time, y = price, color = Index)) +
   geom_line() +
   theme_economist() + scale_colour_economist() + 
-  labs(y = "Indexed price", x = "Year", 
+  labs(y = "Indexed prices", x = "Year", 
        title = "Caffeine shock...",
        subtitle = "...but wages and tea prices left unaffected")
 ```
@@ -141,6 +145,7 @@ $log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \beta_3* log(T) + log(income) +
 
 
 Note to ourselves: following probably unecesary
+
 $Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
 
 $\beta_1 = \frac{dQ}{dP}\frac{P}$
@@ -148,7 +153,7 @@ $\beta_1 = \frac{dQ}{dP}\frac{P}$
 ```{r}
 tea_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea), data = df)
 income_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea) +
-                       log(incom), data = df)
+                       log(Income), data = df)
 
 # seasonal controls summary
 
@@ -170,8 +175,8 @@ Demand shift:
 
 ```{r}
 IV_spec <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
-                       log(incom) | q1 + q2 + q3 + log(Tea) +
-                       log(incom) + log(Bean) + log(Wage), data = df)
+                       log(Income) | q1 + q2 + q3 + log(Tea) +
+                       log(Income) + log(Bean) + log(Wage), data = df)
 stargazer(no_controls, quarter_controls, tea_control, 
           income_control, IV_spec,  
           column.sep.width = "2pt", 
@@ -256,17 +261,21 @@ where $Q$ is a vector of four quarterly dummies (including all four because we d
 ```{r}
 no_dummies <- lm(Coffee ~ c + 0, data = df) # plus 0 for no intercept
 dummies <- lm(Coffee ~ c + 0 + q1 + q2 + q3 + q4 + 
-                  log(Tea) + log(incom), data = df) # add controls
+                  log(Tea) + log(Income), data = df) # add controls
 # obtain estimate of b
 b <- dummies$coefficients[1]
 ```
 
-We obtain the following estimate for $b$: `r round(b, 2)` which we use to plug into the following formula: $\lambda = \frac{\hat{\eta}(\hat{b}-1)}{\hat{b}}$
+We obtain the following estimate for $b$: `r round(b, 2)` which we use to plug into the following formula: 
+
+$\lambda = \frac{\hat{\eta} (\hat{b} - 1)}{\hat{b}}$
 ```{r}
 lambda = -eta * (b-1)/b
 ```
 
-We estimate $\lambda$ to be equal to `r round(lambda,2)`, which means the market is composed of $\frac{1}{lambda} = $ `r round(1/lambda,2)` equally sized firms.
+We estimate $\lambda \approx $ `r round(lambda,3)`, which means the market is composed of 
+
+$\frac{1}{\lambda} \approx $ `r round(1/lambda,2)` equally sized firms.
 
 
 
