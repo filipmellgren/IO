@@ -1,6 +1,6 @@
 ---
-title: "Empirical Workshop 1"
-author: "Filip Mellgren"
+title: "Competition in the Dutch coffee market"
+author: "David Hakula, Christopher Hayes, Filip Mellgren"
 date: '2019-04-02'
 output:
   word_document: default
@@ -22,27 +22,45 @@ library(tidyverse)
 library(AER)
 library(ggthemes)
 library(stargazer)
+library(reshape2)
 ```
 ```{r}
 df <- import("dutch_coffee.dta")
 ```
 ```{r}
 
-df %>% head()
+df %>% head() %>% as_tibble()
 ```
+
 ```{r}
 # Create time variable
 df <- df %>% mutate(time = year + month/12)
+
+# rename variables
+df <- df %>% rename(Quantity = qu, 
+                    Coffee = cprice, 
+                    Tea = tprice,
+                    Wage = wprice, 
+                    Bean = bprice)
 ```
+
 ## Summary statistics
 
-Present and discuss summary statistics of the data. Show and describe the following relationships: (a) per capita consumption of roasted coffee and the price of roasted coffee, (b) consumption of roasted coffee and price of tea, (c) price of roasted coffee and price of labor, (d) price of roasted coffee and price of tea. Comment if you observe any clear time trends.
+We begin by showing som esumamry statistics,
 
 ### Summary Table
 ```{r}
-#summary(df$cprice)
-sapply(select(df, cprice, tprice, wprice, qu), summary)
+#summary(df$Coffee)
+sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary)
 ```
+```{r}
+cormatdf <- df %>% select(Coffee, Quantity, Bean, Tea, Wage)
+cormat <- round(cor(cormatdf),2)
+melted_cormat <- melt(cormat)
+ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + theme_economist() + scale_colour_economist()
+```
+
 
 
 ### Per capita consumption of roasted coffe and price of roasted coffee
@@ -50,11 +68,11 @@ sapply(select(df, cprice, tprice, wprice, qu), summary)
 # descriptives are important!
 # Plot all the time series in separate graphs
 # a) per capita consumption of roasted coffee and price of roasted coffee
-df %>% ggplot(aes(x = time, y = qu)) +
+df %>% ggplot(aes(x = time, y = Quantity)) +
   geom_line() +
   labs(y = "Quantity", x = "Year", title = "Per capita consumption of roasted coffee")
 
-df %>% ggplot(aes(x = time, y = cprice)) +
+df %>% ggplot(aes(x = time, y = Coffee)) +
   geom_line() +
   theme_economist() + scale_colour_economist() +
   labs(y = "Price", x = "Year", title = "Price of roasted coffee")
@@ -62,10 +80,10 @@ df %>% ggplot(aes(x = time, y = cprice)) +
 
 ```{r}
 # Coffee and tea and quantity indexed
-df <- df %>% mutate("price roasted coffee" = cprice/cprice[1]*100,
-              "price tea" = tprice/tprice[1]*100,
-              "pc roasted coffee consumption" = qu/qu[1]*100,
-              "price coffee beans" = bprice/bprice[1]*100) 
+df <- df %>% mutate("price roasted coffee" = Coffee/Coffee[1]*100,
+              "price tea" = Tea/Tea[1]*100,
+              "pc roasted coffee consumption" = Quantity/Quantity[1]*100,
+              "price coffee beans" = Bean/Bean[1]*100) 
 
 df %>% gather(`price roasted coffee`, `price tea`, `pc roasted coffee consumption`, key = "index", value = "price") %>% 
   ggplot(aes(x = time, y = price, color = index )) +
@@ -75,9 +93,9 @@ df %>% gather(`price roasted coffee`, `price tea`, `pc roasted coffee consumptio
 ```
 ```{r}
 # Calculate correlations
-cor(df$cprice, df$tprice)
-cor(df$cprice, df$qu)
-cor(df$tprice, df$qu)
+cor(df$Coffee, df$Tea)
+cor(df$Coffee, df$Quantity)
+cor(df$Tea, df$Quantity)
 ```
 ```{r}
 df %>% gather(`price roasted coffee`, `price coffee beans`, key = "index", value = "price") %>% 
@@ -90,7 +108,7 @@ df %>% gather(`price roasted coffee`, `price coffee beans`, key = "index", value
 ### Consumption of roasted coffee and price of tea
 ```{r}
 # consumption of roasted coffee and price of tea
-df %>% ggplot(aes(x = time, y = tprice)) +
+df %>% ggplot(aes(x = time, y = Tea)) +
   geom_line() +
   labs(y = "Price", x = "Year", title = "Price of tea")
 
@@ -100,9 +118,9 @@ df %>% ggplot(aes(x = time, y = tprice)) +
 
 ### c and d
 ```{r}
-df <- df %>% mutate("roasted coffee" = cprice/cprice[1]*100,
-              tea = tprice/tprice[1]*100,
-              wages = wprice/wprice[1]*100) 
+df <- df %>% mutate("roasted coffee" = Coffee/Coffee[1]*100,
+              tea = Tea/Tea[1]*100,
+              wages = Wage/Wage[1]*100) 
 
 df %>% gather(`roasted coffee`, tea, wages, key = "Index", value = "price") %>% 
   ggplot(aes(x = time, y = price, color = Index)) +
@@ -117,7 +135,7 @@ df %>% gather(`roasted coffee`, tea, wages, key = "Index", value = "price") %>%
 ```
 ```{r}
 # price of roasted coffee and price of labor
-df %>% ggplot(aes(x = time, y = wprice)) +
+df %>% ggplot(aes(x = time, y = Wage)) +
   geom_line() +
   labs(y = "Price", x = "Year", title = "Wages over time")
 
@@ -128,12 +146,12 @@ df %>% ggplot(aes(x = time, y = wprice)) +
 ```
 ## Regress
 ```{r}
-df <- df %>% mutate(cprice = cprice / oprice,
-              wprice = wprice / oprice,
-              tprice = tprice / oprice)
+df <- df %>% mutate(Coffee = Coffee / oprice,
+              Wage = Wage / oprice,
+              Tea = Tea / oprice)
 
-no_controls <- lm(log(qu) ~ log(cprice), data = df)
-quarter_controls <- lm(log(qu) ~ log(cprice) + q1 + q2 + q3, data = df)
+no_controls <- lm(log(Quantity) ~ log(Coffee), data = df)
+quarter_controls <- lm(log(Quantity) ~ log(Coffee) + q1 + q2 + q3, data = df)
 ```
 
 ```{r results="asis"}
@@ -159,8 +177,8 @@ $Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
 $\beta_1 = \frac{dQ}{dP}\frac{P}$
 
 ```{r}
-tea_control <- lm(log(qu) ~log(cprice) + q1 + q2 + q3 + log(tprice), data = df)
-income_control <- lm(log(qu) ~log(cprice) + q1 + q2 + q3 + log(tprice) +
+tea_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea), data = df)
+income_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea) +
                        log(incom), data = df)
 
 # seasonal controls summary
@@ -173,9 +191,9 @@ stargazer(no_controls, quarter_controls, tea_control, income_control,
 
 ivreg
 ```{r}
-IV_spec <- ivreg(log(qu) ~ log(cprice) + q1 + q2 + q3 + log(tprice) +
-                       log(incom) | q1 + q2 + q3 + log(tprice) +
-                       log(incom) + log(bprice) + log(wprice), data = df)
+IV_spec <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
+                       log(incom) | q1 + q2 + q3 + log(Tea) +
+                       log(incom) + log(Bean) + log(Wage), data = df)
 
 stargazer(IV_spec, income_control, header = FALSE, type = "text")
 summary(IV_spec, diagnostics = TRUE)
@@ -185,13 +203,13 @@ summary(IV_spec, diagnostics = TRUE)
 ```{r}
 c0 = 4
 h = 1.19
-df <- df %>% mutate(c = c0 + h*bprice) # we know the cost already
+df <- df %>% mutate(c = c0 + h*Bean) # we know the cost already
 ```
 
 ### Lerner index
 $L = \frac{P-c}{P}$
 ```{r}
-df <- df %>% mutate(L = (cprice - c)/cprice)
+df <- df %>% mutate(L = (Coffee - c)/Coffee)
 ```
 
 
@@ -248,8 +266,8 @@ $\hat{b} = \frac{\eta}{\eta - \hat{\lambda}}$
 We estimate the following regression: $P_{coffee} = b* cost + \beta' Q$
 where $Q$ is a vector of four quarterly dummies (including all four because we don't include any intercept).
 ```{r}
-no_dummies <- lm(cprice ~ c + 0, data = df) # plus 0 for no intercept
-q_dummies <- lm(cprice ~ c + 0 + q1 + q2 + q3 + q4, data = df) # add controls
+no_dummies <- lm(Coffee ~ c + 0, data = df) # plus 0 for no intercept
+q_dummies <- lm(Coffee ~ c + 0 + q1 + q2 + q3 + q4, data = df) # add controls
 # obtain estimate of b
 b <- no_dummies$coefficients[1]
 ```
