@@ -113,6 +113,8 @@ df %>% gather(`roasted coffee`, tea, wages, key = "Index", value = "price") %>%
 
 
 ## Regressions and demand estimation
+
+We begin by inflation adjust the variables.
 ```{r}
 df <- df %>% mutate(Coffee = Coffee / oprice,
               Wage = Wage / oprice,
@@ -135,8 +137,10 @@ $log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \beta_3* T + \varepsilon$
 where $T$ denotes tea.
 
 Finally, we run the regression 
-$log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \beta_3* T + \varepsilon$
+$log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \beta_3* log(T) + log(income) +  \varepsilon$
 
+
+Note to ourselves: following probably unecesary
 $Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
 
 $\beta_1 = \frac{dQ}{dP}\frac{P}$
@@ -147,8 +151,7 @@ income_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea) +
                        log(incom), data = df)
 
 # seasonal controls summary
-stargazer(no_controls, quarter_controls, tea_control, income_control, 
-          header = FALSE, type = "text")
+
 ```
 
 ## Supply and demand shifters
@@ -162,52 +165,54 @@ Supply shift: wages, prices of beans
 Demand shift: 
 
 
-
-
 ## One major concern
 
-ivreg
+
 ```{r}
 IV_spec <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
                        log(incom) | q1 + q2 + q3 + log(Tea) +
                        log(incom) + log(Bean) + log(Wage), data = df)
+stargazer(no_controls, quarter_controls, tea_control, 
+          income_control, IV_spec,  header = FALSE)
 
-stargazer(IV_spec, income_control, header = FALSE, type = "text")
 summary(IV_spec, diagnostics = TRUE)
 ```
 
 ## Degree of competition in the Dutch coffee market
+Emphasize the log log specification and constant elasticty of demand
+
 ```{r}
 c0 = 4
 h = 1.19
 df <- df %>% mutate(c = c0 + h*Bean) # we know the cost already
 ```
 
-### Lerner index
+### Adjusted and unadjusted Lerner indices
+
+We calculate:
 $L = \frac{P-c}{P}$
 ```{r}
 df <- df %>% mutate(L = (Coffee - c)/Coffee)
 ```
 
 
-### Adjusted Lerner index
-
 $L_\eta = \frac{P-c}{P} \hat{\eta}$
 
 ```{r}
-eta = -0.27737 # The price elastsicity of demand from the IV
-df <- df %>% mutate(L_adj = -eta * L)
+
+eta = IV_spec[[1]][2] # The price elastsicity of demand from the IV
+df <- df %>% mutate(L_adj = -eta * L) #invert the sign
 ```
+
 
 
 ```{r}
 # Summary statistics for both and seasonal variation (plot)
-
 df %>% gather(L, L_adj, key = Type, value = Lerner_index) %>%
   ggplot(aes(x = time, y = Lerner_index, color = Type)) +
   geom_line() +
   theme_economist() + scale_colour_economist() +
-  labs(title = "Firms have a mark up, yet the market is rather competitive",
+  labs(title = "Mark ups are decreasing",
        y = "Lerner index", x = "Year")
 
 
@@ -230,12 +235,14 @@ quarterly_table <- df %>% group_by(q1, q2, q3, q4) %>%
 quarterly_table <- quarterly_table %>% select(-q1, -q2, -q3, -q4) %>%
   select(quarter, everything()) %>%
   arrange(quarter)
-quarterly_table
+library(xtable)
+xtable(quarterly_table, digits = 3)
 ```
 
 ## Conduct parameter
 Estimate for the entire period
 $P = \frac{\eta c}{\eta - \lambda}$
+
 $P = b*c$, estimate $\hat{b}$ from a regression and solve for lambda:
 
 $\hat{b} = \frac{\eta}{\eta - \hat{\lambda}}$
@@ -244,9 +251,10 @@ We estimate the following regression: $P_{coffee} = b* cost + \beta' Q$
 where $Q$ is a vector of four quarterly dummies (including all four because we don't include any intercept).
 ```{r}
 no_dummies <- lm(Coffee ~ c + 0, data = df) # plus 0 for no intercept
-q_dummies <- lm(Coffee ~ c + 0 + q1 + q2 + q3 + q4, data = df) # add controls
+dummies <- lm(Coffee ~ c + 0 + q1 + q2 + q3 + q4 + 
+                  log(Tea) + log(incom), data = df) # add controls
 # obtain estimate of b
-b <- no_dummies$coefficients[1]
+b <- dummies$coefficients[1]
 ```
 
 We obtain the following estimate for $b$: `r round(b, 2)` which we use to plug into the following formula: $\lambda = \frac{\hat{\eta}(\hat{b}-1)}{\hat{b}}$
