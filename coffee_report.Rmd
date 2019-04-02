@@ -23,6 +23,7 @@ library(AER)
 library(ggthemes)
 library(stargazer)
 library(reshape2)
+library(xtable)
 ```
 ```{r}
 df <- import("dutch_coffee.dta")
@@ -221,7 +222,7 @@ df %>% gather(L, L_adj, key = Type, value = Lerner_index) %>%
   ggplot(aes(x = time, y = Lerner_index, color = Type)) +
   geom_line() +
   theme_economist() + scale_colour_economist() +
-  labs(title = "Mark ups are decreasing",
+  labs(title = "Markups are decreasing",
        y = "Lerner index", x = "Year")
 
 
@@ -273,9 +274,9 @@ $\lambda = \frac{\hat{\eta} (\hat{b} - 1)}{\hat{b}}$
 lambda = -eta * (b-1)/b
 ```
 
-We estimate $\lambda \approx $ `r round(lambda,3)`, which means the market is composed of 
+We estimate $\lambda = $ `r round(lambda,3)`, which means the market is composed of 
 
-$\frac{1}{\lambda} \approx $ `r round(1/lambda,2)` equally sized firms.
+$\frac{1}{\lambda} =$ `r round(1/lambda,2)` equally sized firms.
 
 
 
