@@ -51,7 +51,7 @@ We begin by showing som esumamry statistics,
 ### Summary Table
 ```{r}
 #summary(df$Coffee)
-sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary)
+xtable(sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary))
 ```
 ```{r}
 cormatdf <- df %>% select(Coffee, Quantity, Bean, Tea, Wage)
@@ -173,7 +173,11 @@ IV_spec <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
                        log(incom) | q1 + q2 + q3 + log(Tea) +
                        log(incom) + log(Bean) + log(Wage), data = df)
 stargazer(no_controls, quarter_controls, tea_control, 
-          income_control, IV_spec,  header = FALSE)
+          income_control, IV_spec,  
+          column.sep.width = "2pt", 
+          font.size = "normalsize", 
+          omit.stat = c("f", "ser", "adj.rsq"), 
+          no.space = TRUE, header = FALSE)
 
 summary(IV_spec, diagnostics = TRUE)
 ```
