@@ -1,0 +1,88 @@
+---
+title: "Empirical Workshop 1"
+author: "Filip Mellgren"
+date: '2019-04-02'
+output:
+  word_document: default
+  pdf_document: default
+  html_document:
+    code_folding: hide
+    df_print: kable
+    highlight: zenburn
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
+```
+
+```{r}
+library(rio)
+library(tidyverse)
+```
+```{r}
+df <- import("dutch_coffee.dta")
+```
+```{r}
+
+df %>% head()
+```
+```{r}
+# Create time variable
+df <- df %>% mutate(time = year + month/12)
+```
+## Summary statistics
+
+Present and discuss summary statistics of the data. Show and describe the following relationships: (a) per capita consumption of roasted coffee and the price of roasted coffee, (b) consumption of roasted coffee and price of tea, (c) price of roasted coffee and price of labor, (d) price of roasted coffee and price of tea. Comment if you observe any clear time trends.
+
+### Per capita consumption of roasted coffe and price of roasted coffee
+```{r}
+# descriptives are important!
+# Plot all the time series in separate graphs
+# a) per capita consumption of roasted coffee and price of roasted coffee
+df %>% ggplot(aes(x = time, y = qu)) +
+  geom_line() +
+  labs(y = "Quantity", x = "Year", title = "Per capita consumption of roasted coffee")
+```
+```{r}
+df <- df %>% mutate(coffee = cprice/cprice[1]*100,
+              tea = tprice/tprice[1]*100,
+              wages = wprice/wprice[1]*100) 
+
+df %>% gather(coffee, tea, wages, key = "Input", value = "price") %>% 
+  ggplot(aes(x = time, y = price, color = Input)) +
+  geom_line() +
+  labs(y = "Indexed price", x = "Year", title = "Prices")
+```
+
+```{r}
+# consumption of roasted coffee and price of tea
+df %>% ggplot(aes(x = time, y = tprice)) +
+  geom_line() +
+  labs(y = "Price", x = "Year", title = "Price of tea")
+
+```
+```{r}
+# price of roasted coffee and price of labor
+df %>% ggplot(aes(x = time, y = wprice)) +
+  geom_line() +
+  labs(y = "Price", x = "Year", title = "Wages over time")
+
+```
+```{r}
+# price of roasted coffee and price of tea
+
+```
+## Supply and demand shifts
+Start from the data that we have.
+
+## Log linear demand estimation
+$log(Q) = \beta_0 + \beta_1 log(P) + \varepsilon$
+$Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
+$\beta_1 = \frac{dQ}{dP}\frac{P}$
+
+## One major concern
+
+## Degree of competition
+
+## Conduct parameter
