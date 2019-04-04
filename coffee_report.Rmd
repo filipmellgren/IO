@@ -56,7 +56,10 @@ We begin by showing som esumamry statistics,
 xtable(sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary)%>% t())
 ```
 ```{r}
-cormatdf <- df %>% select(Coffee, Quantity, Bean, Tea, Wage, Income)
+
+tmp <- lm(Coffee ~ Bean, data = df)
+df$`Coffee adj` <- tmp$residuals
+cormatdf <- df %>% select(Coffee, `Coffee adj`, Quantity, Bean, Tea, Wage, Income)
 cormat <- round(cor(cormatdf),2)
 
 melted_cormat <- melt(cormat)
@@ -97,7 +100,7 @@ df %>% rename(`Roasted coffee` = Coffee, `Coffee bean` = Bean) %>% gather(`Roast
   ggplot(aes(x = time, y = price, color = Series )) +
   geom_line() +
   theme_economist() + scale_colour_economist() +
-  labs(y = "USD per kg", x = "Year", 
+  labs(y = "Guilders per kg", x = "Year", 
        title = "Bean price spike hits roasted prices hard")
 ```
 
@@ -149,7 +152,7 @@ Note to ourselves: following probably unecesary
 
 $Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
 
-$\beta_1 = \frac{dQ}{dP}\frac{P}$
+$\beta_1 = \frac{dQ}{dP}\frac{P}{Q}$
 
 ```{r}
 tea_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea), data = df)
@@ -172,6 +175,7 @@ Demand shift:
 
 
 ## One major concern
+
 
 
 ```{r}
