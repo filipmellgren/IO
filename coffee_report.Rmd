@@ -3,13 +3,13 @@ title: "Competition in the Dutch coffee market"
 author: "David Hakula, Christopher Hayes, Filip Mellgren"
 date: '2019-04-02'
 output:
+  word_document: default
+  pdf_document: default
   html_document:
     code_folding: hide
     df_print: kable
     highlight: zenburn
     theme: readable
-  pdf_document: default
-  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -316,20 +316,30 @@ library(xtable)
 xtable(quarterly_table, digits = 3)
 ```
 
+From table XXX, we conclude that there are no seasonal effects in the Lerner index
+
 ## Conduct parameter
 Estimate for the entire period
 $P = \frac{\eta c}{\eta - \lambda}$
 
-$P = b*c$, estimate $\hat{b}$ from a regression and solve for lambda:
+Next, 
+
+* $P = \frac{\eta}{\eta-\lambda} *c$, 
+
+* $\frac{\eta}{\eta-\lambda} = b$
+
+* $P = bc$, estimate $\hat{b}$ from a regression and solve for lambda: 
+* $b = \frac{\eta}{\eta-\lambda}$
+* $(\eta-\lambda)*b = \eta$
+
 
 $\hat{b} = \frac{\eta}{\eta - \hat{\lambda}}$
 
-We estimate the following regression: $P_{coffee} = b* cost + \beta' Q$
-where $Q$ is a vector of four quarterly dummies (including all four because we don't include any intercept).
+We estimate the following regression: $P_{coffee} = b* cost$
+where $Q$ is a vector of four quarterly dummies (including three so as to not include an intercept).
 ```{r}
 no_dummies <- lm(Coffee ~ c + 0, data = df) # plus 0 for no intercept
-dummies <- lm(Coffee ~ c + 0 + q1 + q2 + q3 + q4 + 
-                  log(Tea) + log(Income), data = df) # add controls
+dummies <- lm(Coffee ~ c + 0 + q1 + q2 + q3, data = df) # add controls
 # obtain estimate of b
 b <- dummies$coefficients[1]
 ```
@@ -341,9 +351,10 @@ $\lambda = \frac{\hat{\eta} (\hat{b} - 1)}{\hat{b}}$
 lambda = -eta * (b-1)/b
 ```
 
-We estimate $\lambda = $ `r round(lambda,3)`, which means the market is composed of 
+We estimate $\lambda =$ `r round(lambda,3)`, which means the market is composed of 
 
 $\frac{1}{\lambda} =$ `r round(1/lambda,2)` equally sized firms.
 
+Index of market power. Assuming identical firms, lambda is the inverse of number of identical firms.
 
-
+This market can then be said to be equivalent to N Cournot competitors.

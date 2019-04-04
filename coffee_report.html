@@ -648,6 +648,12 @@ income_control &lt;-<span class="st"> </span><span class="kw">lm</span>(<span cl
 ## Residual standard error: 0.09823 on 77 degrees of freedom
 ## Multiple R-Squared: 0.2821,  Adjusted R-squared: 0.2262 
 ## Wald test: 5.081 on 6 and 77 DF,  p-value: 0.0001933</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">stargazer</span>(no_controls, quarter_controls, tea_control, 
+          income_control, IV_spec,  
+          <span class="dt">column.sep.width =</span> <span class="st">&quot;2pt&quot;</span>, 
+          <span class="dt">font.size =</span> <span class="st">&quot;normalsize&quot;</span>, 
+          <span class="dt">omit.stat =</span> <span class="kw">c</span>(<span class="st">&quot;f&quot;</span>, <span class="st">&quot;ser&quot;</span>, <span class="st">&quot;adj.rsq&quot;</span>), 
+          <span class="dt">no.space =</span> <span class="ot">TRUE</span>, <span class="dt">header =</span> <span class="ot">FALSE</span>)</code></pre></div>
 
 </div>
 <div id="degree-of-competition-in-the-dutch-coffee-market" class="section level2">
@@ -661,6 +667,7 @@ df &lt;-<span class="st"> </span>df <span class="op">%&gt;%</span><span class="s
 <h3>Adjusted and unadjusted Lerner indices</h3>
 <p>We calculate: <span class="math inline">\(L = \frac{P-c}{P}\)</span></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df &lt;-<span class="st"> </span>df <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">L =</span> (Coffee <span class="op">-</span><span class="st"> </span>c)<span class="op">/</span>Coffee)</code></pre></div>
+<p>We use the estimate of the elasticity from the IV specification despite the fact that the Wu Hausman indicates that the efficient estimate from the OLS is not significantly different. We do this because of the concern that there still may be a slight bias in the OLS and because the standard errors are not very different.</p>
 <p><span class="math inline">\(L_\eta = \frac{P-c}{P} \hat{\eta}\)</span></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">eta =<span class="st"> </span>IV_spec[[<span class="dv">1</span>]][<span class="dv">2</span>] <span class="co"># The price elastsicity of demand from the IV</span>
 df &lt;-<span class="st"> </span>df <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">L_adj =</span> <span class="op">-</span>eta <span class="op">*</span><span class="st"> </span>L) <span class="co">#invert the sign</span></code></pre></div>
@@ -732,24 +739,34 @@ quarterly_table &lt;-<span class="st"> </span>quarterly_table <span class="op">%
 </tbody>
 </table>
 </div>
+<p>From table XXX, we conclude that there are no seasonal effects in the Lerner index</p>
 </div>
 </div>
 <div id="conduct-parameter" class="section level2">
 <h2>Conduct parameter</h2>
 <p>Estimate for the entire period <span class="math inline">\(P = \frac{\eta c}{\eta - \lambda}\)</span></p>
-<p><span class="math inline">\(P = b*c\)</span>, estimate <span class="math inline">\(\hat{b}\)</span> from a regression and solve for lambda:</p>
+<p>Next,</p>
+<ul>
+<li><p><span class="math inline">\(P = \frac{\eta}{\eta-\lambda} *c\)</span>,</p></li>
+<li><p><span class="math inline">\(\frac{\eta}{\eta-\lambda} = b\)</span></p></li>
+<li><span class="math inline">\(P = bc\)</span>, estimate <span class="math inline">\(\hat{b}\)</span> from a regression and solve for lambda:</li>
+<li><span class="math inline">\(b = \frac{\eta}{\eta-\lambda}\)</span></li>
+<li><p><span class="math inline">\((\eta-\lambda)*b = \eta\)</span></p></li>
+</ul>
 <p><span class="math inline">\(\hat{b} = \frac{\eta}{\eta - \hat{\lambda}}\)</span></p>
-<p>We estimate the following regression: <span class="math inline">\(P_{coffee} = b* cost + \beta' Q\)</span> where <span class="math inline">\(Q\)</span> is a vector of four quarterly dummies (including all four because we don’t include any intercept).</p>
+<p>We estimate the following regression: <span class="math inline">\(P_{coffee} = b* cost\)</span> where <span class="math inline">\(Q\)</span> is a vector of four quarterly dummies (including three so as to not include an intercept). We also control for income and the price of tea, as these are expected to affect the price of roasted coffee.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">no_dummies &lt;-<span class="st"> </span><span class="kw">lm</span>(Coffee <span class="op">~</span><span class="st"> </span>c <span class="op">+</span><span class="st"> </span><span class="dv">0</span>, <span class="dt">data =</span> df) <span class="co"># plus 0 for no intercept</span>
-dummies &lt;-<span class="st"> </span><span class="kw">lm</span>(Coffee <span class="op">~</span><span class="st"> </span>c <span class="op">+</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>q1 <span class="op">+</span><span class="st"> </span>q2 <span class="op">+</span><span class="st"> </span>q3 <span class="op">+</span><span class="st"> </span>q4 <span class="op">+</span><span class="st"> </span>
-<span class="st">                  </span><span class="kw">log</span>(Tea) <span class="op">+</span><span class="st"> </span><span class="kw">log</span>(Income), <span class="dt">data =</span> df) <span class="co"># add controls</span>
+dummies &lt;-<span class="st"> </span><span class="kw">lm</span>(Coffee <span class="op">~</span><span class="st"> </span>c <span class="op">+</span><span class="st"> </span><span class="dv">0</span> <span class="op">+</span><span class="st"> </span>q1 <span class="op">+</span><span class="st"> </span>q2 <span class="op">+</span><span class="st"> </span>q3 <span class="op">+</span><span class="st"> </span>
+<span class="st">                  </span>Tea <span class="op">+</span><span class="st"> </span>Income, <span class="dt">data =</span> df) <span class="co"># add controls</span>
 <span class="co"># obtain estimate of b</span>
 b &lt;-<span class="st"> </span>dummies<span class="op">$</span>coefficients[<span class="dv">1</span>]</code></pre></div>
-<p>We obtain the following estimate for <span class="math inline">\(b\)</span>: 1.23 which we use to plug into the following formula:</p>
+<p>We obtain the following estimate for <span class="math inline">\(b\)</span>: 1.21 which we use to plug into the following formula:</p>
 <p><span class="math inline">\(\lambda = \frac{\hat{\eta} (\hat{b} - 1)}{\hat{b}}\)</span></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lambda =<span class="st"> </span><span class="op">-</span>eta <span class="op">*</span><span class="st"> </span>(b<span class="op">-</span><span class="dv">1</span>)<span class="op">/</span>b</code></pre></div>
-<p>We estimate $= $ 0.053, which means the market is composed of</p>
-<p><span class="math inline">\(\frac{1}{\lambda} =\)</span> 18.73 equally sized firms.</p>
+<p>We estimate $= $ 0.05, which means the market is composed of</p>
+<p><span class="math inline">\(\frac{1}{\lambda} =\)</span> 20.13 equally sized firms.</p>
+<p>Index of market power. Assuming identical firms, lambda is the inverse of number of identical firms.</p>
+<p>This market can then be said to be equivalent to N Cournot competitors.</p>
 </div>
 </div>
 
