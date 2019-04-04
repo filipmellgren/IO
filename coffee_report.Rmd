@@ -36,6 +36,7 @@ df %>% head() %>% as_tibble()
 ```{r}
 # Create time variable
 df <- df %>% mutate(time = year + month/12)
+df$year %>% glimpse
 
 # rename variables
 df <- df %>% rename(Quantity = qu, 
