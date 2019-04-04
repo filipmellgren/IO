@@ -3,13 +3,13 @@ title: "Competition in the Dutch coffee market"
 author: "David Hakula, Christopher Hayes, Filip Mellgren"
 date: '2019-04-02'
 output:
-  word_document: default
-  pdf_document: default
   html_document:
     code_folding: hide
     df_print: kable
     highlight: zenburn
     theme: readable
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -33,6 +33,12 @@ df <- import("dutch_coffee.dta")
 df %>% head() %>% as_tibble()
 ```
 
+# Introduction
+The purpose of this report is to evaluate the Dutch coffee market, on behalf of the Directorate-General for Competition at the European Commission. Through the report, we use monthly data for the Dutch coffee market during the period 1990-1996 as basis for the analysis.  
+
+Let us first note that we only have aggregate time-series data. However, we can nonetheless address the question of market concentration indirectly by exploiting the negative relationship it has with price elasticity of demand, and its positive relationship with markups (even in a market with homogenous products). 
+
+The Dutch coffee market is dominated by
 ```{r}
 # Create time variable
 df <- df %>% mutate(time = year + month/12)
@@ -49,7 +55,9 @@ df <- df %>% rename(Quantity = qu,
 
 ## Summary statistics
 
-We begin by showing som esumamry statistics,
+To introduce the dataset, we provide summary statistics over the most relevant variables in Table 1 below.  
+
+We observe that both roasted coffee prices and quantity consumed skew right, with outlying maximum values.   
 
 ### Summary Table
 ```{r}
@@ -57,7 +65,6 @@ We begin by showing som esumamry statistics,
 xtable(sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary)%>% t())
 ```
 ```{r}
-
 tmp <- lm(Coffee ~ Bean, data = df)
 df$`Coffee adj` <- tmp$residuals
 cormatdf <- df %>% select(Coffee, `Coffee adj`, Quantity, Bean, Tea, Wage, Income)
@@ -67,14 +74,16 @@ melted_cormat <- melt(cormat)
 
 melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) + 
   geom_tile() + theme_economist() + scale_colour_economist() +
-  labs(title = "Correlation matrix", y = " ", x = " ") +
+  labs(title = "Correlation matrix", y = " ", x = " ",
+       caption = "'Coffee adj' refers to the residuals after regressing roasted coffee on the price of coffee beans.") +
   scale_fill_gradient2(low = "#336666", high = "#664033", mid = "white", 
    midpoint = 0, limit = c(-1,1), space = "Lab", 
     name="Pearson\nCorrelation")
 ```
+Look at legend value separation
 
-
-### Per capita consumption of roasted coffe and price of roasted coffee
+### Consumption of roasted coffee
+The consumption of roasted coffee is largely independent of the prices of coffee and tea. 
 
 ```{r}
 # Coffee and tea and quantity indexed
@@ -95,17 +104,8 @@ cor(df$Coffee, df$Tea)
 cor(df$Coffee, df$Quantity)
 cor(df$Tea, df$Quantity)
 ```
-```{r}
-df %>% rename(`Roasted coffee` = Coffee, `Coffee bean` = Bean) %>% gather(`Roasted coffee`, `Coffee bean`, key = "Series", 
-              value = "price") %>% 
-  ggplot(aes(x = time, y = price, color = Series )) +
-  geom_line() +
-  theme_economist() + scale_colour_economist() +
-  labs(y = "Guilders per kg", x = "Year", 
-       title = "Bean price spike hits roasted prices hard")
-```
-
 ### c and d
+
 ```{r}
 df <- df %>% mutate("roasted coffee" = Coffee/Coffee[1]*100,
               tea = Tea/Tea[1]*100,
@@ -121,9 +121,26 @@ df %>% gather(`roasted coffee`, tea, wages, key = "Index", value = "price") %>%
 ```
 
 
-## Regressions and demand estimation
+```{r}
+df %>% rename(`Roasted coffee` = Coffee, `Coffee bean` = Bean) %>% gather(`Roasted coffee`, `Coffee bean`, key = "Series", 
+              value = "price") %>% 
+  ggplot(aes(x = time, y = price, color = Series )) +
+  geom_line() +
+  theme_economist() + scale_colour_economist() +
+  labs(y = "Guilders per kg", x = "Year", 
+       title = "Bean price spike hits roasted prices hard")
+```
+```{r}
+# Percentage change in prices
+max(df$Coffee)/df$Coffee[55]
+max(df$Bean)/df$Bean[54]
+```
 
-We begin by inflation adjust the variables.
+
+
+# Regressions and demand estimation
+
+We begin by inflation adjust the variables before running the regressions.
 ```{r}
 df <- df %>% mutate(Coffee = Coffee / oprice,
               Wage = Wage / oprice,
@@ -132,10 +149,12 @@ df <- df %>% mutate(Coffee = Coffee / oprice,
 no_controls <- lm(log(Quantity) ~ log(Coffee), data = df)
 quarter_controls <- lm(log(Quantity) ~ log(Coffee) + q1 + q2 + q3, data = df)
 ```
+We specify four different OLS regressions, each with a separate set of control variables specified in table (XXX). We regress logged values against logged values which allows us to directly interpret the coefficient estimates as elasticities. Note that this specification assumes the elasticity of demand to be constant.
+
 First, we run a regression without any controls
 $log(Q) = \beta_0 + \beta_1 log(P) + \varepsilon$
 
-Second
+Second, 
 $log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \varepsilon$
 
 Where $Q$ are quarterly dummies.
@@ -148,52 +167,93 @@ where $T$ denotes tea.
 Finally, we run the regression 
 $log(Q) = \beta_0 + \beta_1 log(P) + \beta_2´Q+ \beta_3* log(T) + log(income) +  \varepsilon$
 
-
-Note to ourselves: following probably unecesary
-
-$Q = e^{\beta_0 + \beta_1 log(P) + \varepsilon}$
-
-$\beta_1 = \frac{dQ}{dP}\frac{P}{Q}$
-
 ```{r}
 tea_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea), data = df)
 income_control <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea) +
                        log(Income), data = df)
-
-# seasonal controls summary
-
 ```
 
-## Supply and demand shifters
-Start from the data that we have.
+## Shift in supply and demand
 
-Valid instrument, corr(zx) > 0, E(z epsilon) = 0.
-How to find instruments? 
+From the variables visible to us, we would intuitively expect the demand curve to be shifted by the price of substitutes (tea) and consumer income. We would expect the supply curve to be shifted by the prices of inputs (beans and labour) and the season, which might affect yield.
 
-Supply shift: wages, prices of beans
+Supply shifts
 
-Demand shift: 
+* Wages
+* Prices of beans
+
+Demand shifts
+
+* Price of substitutes, tea
+* Income of consumers
+
+We expect that tea and coffee are substitutes, meaning that...
+Additionally, we anticipate that the level of income can have an effect on coffe consumption. We expect the wages of roasters constitute a small share of the overall income...
+
+Comment on correlation between these two and the adjusted coffee
+
+Question how exogenous they are
+
+Economic theory
 
 
-## One major concern
+## Overcoming endogeneity
+
+Describe problem of omitted variable bias  (what variables are omitted).
+
+What have we observed? 
+
+Things that increase both quantity demanded and price for consumers (quality)
+
+Tea being endogenous
+
+Complement
+
+Also, reverse causality
+
+To overcome the plausible issue of having endogeneity in the error term, we use the logarithm of bean prices together with the logarithm of wages, potential supply shifters, as instruments for the logarithm of the price of roasted coffee. 
 
 
+These two instruments are likely to fulfill both the relevance, and the validity conditions required of excluded instruments. That the bean prices is a relevant instrument is clear by figure ???, whereas there is only a moderate correlation between wages and the price of roasted coffee beans. Either way, it is noted that the first stage F statistic is 345 which is well above the requirements.  
+
+Arguing for validity is more involved. Having valid instruments means the instruments are exogenous to the error term, conditional on the set of control variables included in the regression specification. In our case, it means that the bean price and the wage must be independent of the quantity of coffee consumed. This could be violated if, for instance, customer taste for coffee increased which lead to an increase in coffee consumed; or if higher wages of workers was associated with a change in coffee consumption (for example if coffee workers comprise a large proportion of the consumer base). On the other hand, investigating what caused the spike in the bean prices, it becomes evident that this event was driven by a series of severe frosts in Brazil (normally accounting for 25-35% of the world’s coffee) that June and July 1994, which is independent of quantity consumed. It could still be the case that the instrument is exogenous... but with the Sargan statistic being non significant, both instruments lead to similar estimates, strengthening the case that they indeed provide consistent estimates of elasticity of demand. 
+
+Note that we do not use the demand shifters as instruments since these shift the demand curve that we want to pin down.
+
+Mention that elasticity is constant? 
+
+Idea: show graph of wage correlation with roasted coffe prices controlling for the controls in th IV specification 
+
+First stage F statistic: 345 > 10: strong first stage. 
+
+Wu Hausman: 0.577. Means we cannot reject the null hypothesis of the OLS and IV estimates being the same. 
+
+Sargan: 0.707 Insignificant meaning we cannot reject the null that the instruments lead to the same estimate. 
+
+Interpret the result. Mention Wu Hausman and interpret the elasticity and its magnitude.
+
+Mention that its inelastic.
 
 ```{r}
 IV_spec <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
                        log(Income) | q1 + q2 + q3 + log(Tea) +
                        log(Income) + log(Bean) + log(Wage), data = df)
+summary(IV_spec, diagnostics = TRUE)
+```
+
+```{r, results='asis'}
 stargazer(no_controls, quarter_controls, tea_control, 
           income_control, IV_spec,  
           column.sep.width = "2pt", 
           font.size = "normalsize", 
           omit.stat = c("f", "ser", "adj.rsq"), 
           no.space = TRUE, header = FALSE)
-
-summary(IV_spec, diagnostics = TRUE)
 ```
 
+
 ## Degree of competition in the Dutch coffee market
+Next, we move on to estimate the degree of competition. Since the technology of the process of converting raw beans into roasted coffee
+
 Emphasize the log log specification and constant elasticty of demand
 
 ```{r}
@@ -204,12 +264,14 @@ df <- df %>% mutate(c = c0 + h*Bean) # we know the cost already
 
 ### Adjusted and unadjusted Lerner indices
 
+
 We calculate:
 $L = \frac{P-c}{P}$
 ```{r}
 df <- df %>% mutate(L = (Coffee - c)/Coffee)
 ```
 
+We use the estimate of the elasticity from the IV specification despite the fact that the Wu Hausman indicates that the efficient estimate from the OLS is not significantly different. We do this because of the concern that there still may be a slight bias in the OLS and because the standard errors are not very different.
 
 $L_\eta = \frac{P-c}{P} \hat{\eta}$
 
