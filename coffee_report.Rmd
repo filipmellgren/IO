@@ -67,6 +67,7 @@ xtable(sapply(select(df,Quantity, Coffee, Tea, Wage, Bean), summary)%>% t())
 ```{r}
 tmp <- lm(Coffee ~ Bean, data = df)
 df$`Coffee adj` <- tmp$residuals
+
 cormatdf <- df %>% select(Coffee, `Coffee adj`, Quantity, Bean, Tea, Wage, Income)
 cormat <- round(cor(cormatdf),2)
 
@@ -132,7 +133,7 @@ df %>% rename(`Roasted coffee` = Coffee, `Coffee bean` = Bean) %>% gather(`Roast
 ```
 ```{r}
 # Percentage change in prices
-max(df$Coffee)/df$Coffee[55]
+max(df$Coffee)/df$Coffee[54]
 max(df$Bean)/df$Bean[54]
 ```
 
@@ -297,6 +298,7 @@ df %>% gather(L, L_adj, key = Type, value = Lerner_index) %>%
 
 
 ```{r}
+
 quarterly_table <- df %>% group_by(q1, q2, q3, q4) %>% 
   summarize("mean unadjusted" = mean(L),
             "mean adjusted" = mean(L_adj),
@@ -358,3 +360,29 @@ $\frac{1}{\lambda} =$ `r round(1/lambda,2)` equally sized firms.
 Index of market power. Assuming identical firms, lambda is the inverse of number of identical firms.
 
 This market can then be said to be equivalent to N Cournot competitors.
+
+```{r}
+tmp <- lm(Coffee ~ Bean + time, data = df)
+df$`Coffee adj` <- tmp$residuals
+
+df$Coffee <- lm(Coffee~time, data = df)$residuals
+df$Tea <- lm(Tea~time, data = df)$residuals
+df$Quantity <- lm(Quantity~time, data = df)$residuals
+df$Bean <- lm(Bean~time, data = df)$residuals
+df$Wage <- lm(Wage~time, data = df)$residuals
+df$Income <- lm(Income~time, data = df)$residuals
+
+cormatdf <- df %>% select(Coffee, `Coffee adj`, Quantity, Bean, Tea, Wage, Income)
+cormat <- round(cor(cormatdf),2)
+
+melted_cormat <- melt(cormat)
+
+melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + theme_economist() + scale_colour_economist() +
+  labs(title = "Correlation matrix", y = " ", x = " ",
+       caption = "All variables were detrended. 'Coffee adj' refers to the residuals after regressing roasted coffee on the price of coffee beans.") +
+  scale_fill_gradient2(low = "#336666", high = "#664033", mid = "white", 
+   midpoint = 0, limit = c(-1,1), space = "Lab", 
+    name="Pearson\nCorrelation")
+```
+
