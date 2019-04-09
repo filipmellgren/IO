@@ -360,6 +360,13 @@ $\frac{1}{\lambda} =$ `r round(1/lambda,2)` equally sized firms.
 Index of market power. Assuming identical firms, lambda is the inverse of number of identical firms.
 
 This market can then be said to be equivalent to N Cournot competitors.
+```{r}
+# IV with linear trend
+IV_spec <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
+                       log(Income)+ time  | q1 + q2 + q3 + log(Tea) +
+                       log(Income) + log(Bean) + log(Wage) + time, data = df)
+summary(IV_spec, diagnostics = TRUE)
+```
 
 ```{r}
 tmp <- lm(Coffee ~ Bean + time, data = df)
@@ -380,9 +387,17 @@ melted_cormat <- melt(cormat)
 melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) + 
   geom_tile() + theme_economist() + scale_colour_economist() +
   labs(title = "Correlation matrix", y = " ", x = " ",
-       caption = "All variables were detrended. 'Coffee adj' refers to the residuals after regressing roasted coffee on the price of coffee beans.") +
+       caption = 
+         "All variables were detrended by first regressing them on a time variable. 
+       'Coffee adj' refers to the residuals after regressing roasted coffee on the price of coffee beans.") +
   scale_fill_gradient2(low = "#336666", high = "#664033", mid = "white", 
    midpoint = 0, limit = c(-1,1), space = "Lab", 
     name="Pearson\nCorrelation")
+
+ggsave("cormat.png")
+```
+
+```{r}
+
 ```
 
