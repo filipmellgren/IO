@@ -361,12 +361,65 @@ Index of market power. Assuming identical firms, lambda is the inverse of number
 
 This market can then be said to be equivalent to N Cournot competitors.
 ```{r}
+no_controls_t <- lm(log(Quantity) ~ log(Coffee) + time, data = df)
+quarter_controls_t <- lm(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + time, data = df)
+tea_control_t <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea) + time, data = df)
+income_control_t <- lm(log(Quantity) ~log(Coffee) + q1 + q2 + q3 + log(Tea) +
+                       log(Income) + time, data = df)
 # IV with linear trend
-IV_spec <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
+IV_spec_t <- ivreg(log(Quantity) ~ log(Coffee) + q1 + q2 + q3 + log(Tea) +
                        log(Income)+ time  | q1 + q2 + q3 + log(Tea) +
                        log(Income) + log(Bean) + log(Wage) + time, data = df)
-summary(IV_spec, diagnostics = TRUE)
+summary(IV_spec_t, diagnostics = TRUE)
 ```
+```{r}
+stargazer(no_controls_t, quarter_controls_t, tea_control_t, 
+          income_control_t, IV_spec_t,  
+          column.sep.width = "2pt", 
+          font.size = "normalsize", 
+          omit.stat = c("f", "ser", "adj.rsq"), 
+          no.space = TRUE, header = FALSE)
+```
+
+```{r}
+eta = IV_spec_t[[1]][2] # The price elastsicity of demand from the IV
+df <- df %>% mutate(L_adj = -eta * L) #invert the sign
+```
+
+
+
+```{r}
+# Summary statistics for both and seasonal variation (plot)
+df %>% gather(L, L_adj, key = Type, value = Lerner_index) %>%
+  ggplot(aes(x = time, y = Lerner_index, color = Type)) +
+  geom_line() +
+  theme_economist() + scale_colour_economist() +
+  labs(title = "Markups are decreasing",
+       y = "Lerner index", x = "Year")
+ggsave("markups.png")
+
+```
+```{r}
+quarterly_table <- df %>% group_by(q1, q2, q3, q4) %>% 
+  summarize("mean unadjusted" = mean(L),
+            "mean adjusted" = mean(L_adj),
+            "std unadjusted" = sqrt(var(L)),
+            "std adjusted" = sqrt(var(L_adj))) %>%
+  mutate(quarter = case_when(
+    q1 == 1 ~ "Q1",
+    q2 == 1 ~ "Q2",
+    q3 == 1 ~ "Q3",
+    q4 == 1 ~ "Q4")) %>%
+  as_tibble()
+
+quarterly_table <- quarterly_table %>% select(-q1, -q2, -q3, -q4) %>%
+  select(quarter, everything()) %>%
+  arrange(quarter)
+library(xtable)
+xtable(quarterly_table, digits = 3)
+```
+
+
 
 ```{r}
 tmp <- lm(Coffee ~ Bean + time, data = df)
