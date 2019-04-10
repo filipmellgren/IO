@@ -1,0 +1,48 @@
+---
+title: "Workshop 2"
+author: "Filip Mellgren, David Hakula, Christopher Hayes"
+date: '2019-04-10'
+output:
+  html_document:
+    code_folding: hide
+    df_print: kable
+    highlight: zenburn
+    theme: readable
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings = FALSE)
+```
+
+## R Markdown
+
+```{r libraries, include = FALSE }
+library(tidyverse)
+library(rio)
+library(ggthemes)
+```
+
+```{r import}
+df <- import("Hypermarkets.dta")
+df <- df %>% as_tibble
+```
+
+Show a histogram of local market population across markets with different number of hy-
+permarkets.
+```{r density}
+word_margin <- 6
+df %>% ggplot(aes(x = pop, fill = as.character(stores),
+                  color = as.character(stores) )) +
+  geom_density(alpha=0.5) + scale_fill_economist() + scale_color_economist() +
+  theme_economist() +
+  labs(title = "Large towns have more stores", 
+       subtitle = "Yet there exists small towns with many stores", 
+       caption = "A caption can be added",
+  tag = "Graph 1", x = "Population (1000's)", y = "Density", 
+  color = "Stores", fill = "Stores")
+```
+```{r}
+ggsave("Store_density_plot.png", height = 10, width = 29.7 - word_margin, units = "cm")
+```
+
