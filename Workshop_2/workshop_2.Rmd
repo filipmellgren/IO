@@ -54,9 +54,8 @@ df %>% group_by(stores) %>%
 # Graphically illustrate 
 
 ```{r}
-df %>% ggplot(aes(x = stores, y = pop)) +
-  geom_point(alpha=0.5,  position = "jitter",shape = 19) +
-  geom_point(alpha=0.5,  color = "red",shape = 19) +
+df %>% ggplot(aes(x = factor(stores), y = pop)) +
+  geom_violin(alpha=0.5, scale = "count", adjust = 1) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   labs(title = "Heteroskedastic relationship", 
        caption = "A small amount of random noise was added to each point to better convey intuition about the conditional distribution",
