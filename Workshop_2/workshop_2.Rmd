@@ -48,11 +48,12 @@ Google scholar for sources
 Show the distribution of the number of big-box stores across local markets (BR Table 2). Comment.
 
 
-```{r}
-# TODO: make latex ready, trim decimals
+```{r, results='asis'}
+library(stargazer)
+# TODO: make latex ready
 df %>% group_by(stores) %>% 
   summarise(n = n()) %>% mutate(freq = n/ sum(n), cum = cumsum(n)/sum(n)) %>%
-  t()
+  t() %>% round(2) %>% stargazer(title = "Distribution of stores", type = "text") # change from text to latex
 ```
 
 
@@ -75,7 +76,7 @@ permarkets.
 ```{r density}
 df %>% ggplot(aes(x = pop, fill = as.character(stores),
                   color = as.character(stores) )) +
-  geom_histogram(alpha=0.5) + scale_fill_economist() + scale_color_economist() +
+  geom_density(alpha=0.5) + scale_fill_economist() + scale_color_economist() +
   theme_economist() +
   labs(title = "Large municipalities have more stores", 
        subtitle = "Yet there exists small towns with many stores", 
@@ -102,7 +103,8 @@ df <- as_tibble(df)
 # pos_gpop and neg_gpop not included
 tmp <- sapply(dplyr::select(df, stores, pop,
                      s_kids, s_pens, s_young, s_women, consumption,
-                     hprice, hsold, wage, dist), summary)%>% t()
+                     hprice, hsold, wage, dist), summary)%>% t() %>% round(2) %>%
+  as_tibble(rownames = "Variable") %>% dplyr::select("Variable","Min.", "Mean", "Max.")
  
 
 
