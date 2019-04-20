@@ -178,6 +178,19 @@ where the bars indicate average values. How many individuals are required for a 
 for two, three, four and five stores, respectively, to operate? Explain.
 (BR Table 5, left panel A)
 
+```{r}
+# Not ready to run. Need to know what variables goes into X and W
+Xbar <- df %>% select("X-variables") %>% summarize(mean())
+Wbar <- 
+
+S1 <- (g1 + gL* Wbar) / (a1 + Xbar*betahat)
+S2 <- (g1 + gL* Wbar + g2) / (a1 + Xbar*betahat - a2)
+S3 <- (g1 + gL* Wbar + g2 + g3) / (a1 + Xbar*betahat - a2 - a3)
+S4 <- (g1 + gL* Wbar + g2 + g3 + g4) / (a1 + Xbar*betahat - a2 - a3 - a4)
+S5 <- (g1 + gL* Wbar + g2 + g3 + g4 + g5) / (a1 + Xbar*betahat - a2 - a3 - a4 - a5)
+```
+
+
 
 # Question 8: per firm entry threshold
 Construct per-firm entry threshold ratios (BR Table 5, right panel A).
