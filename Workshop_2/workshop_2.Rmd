@@ -28,7 +28,7 @@ library(stats4)
 
 ```{r import}
 df <- import("Hypermarkets.dta")
-df <- df %>% as_tibble
+df <- df %>% as_tibble %>% drop_na()
 ```
 
 # Question 1. Premises of the analysis 
@@ -92,22 +92,23 @@ ggsave("Store_density_plot.png", height = 10, width = 29.7 - word_margin, units 
 # Question 4 summary stats and descriptives
 Present summary statistics and correlations of the number of stores and local market characteristics. Interpret your findings.
 ```{r summary statistics and correlations}
-# TODO: delete NAs from DF, that way, we might be able to include everything using "everyting()"
-# TODO: Add correlation with stores as a sep. column
-# TODO:  Include sd
-# TODO: remove some columns
 # TODO: make latex ready
 
 df <- as_tibble(df)
 
 # pos_gpop and neg_gpop not included
-tmp <- sapply(dplyr::select(df, stores, pop,
-                     s_kids, s_pens, s_young, s_women, consumption,
-                     hprice, hsold, wage, dist), summary)%>% t() %>% round(2) %>%
+summary_df <- sapply(dplyr::select(df, everything()), summary)%>% t() %>% round(2) %>%
   as_tibble(rownames = "Variable") %>% dplyr::select("Variable","Min.", "Mean", "Max.")
  
+sd_df <- df %>% map(function(x) sd(x)) %>% as_tibble() %>% t() %>% 
+  round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Std. Dev" = V1)
+
+corr_df <- df %>% map(function(x) cor(df$stores, x)) %>% 
+  as_tibble() %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% 
+  rename("Correlation w. stores" = V1)
 
 
+summary_df <- full_join(summary_df, sd_df) %>% full_join(corr_df)
 ```
 
 "interpret your findings here"
@@ -198,6 +199,12 @@ How does the intensity of competition change when there are two bigbox stores co
 change when there are three big-box stores compared to two, four bigbox stores compared to three, and five big-box stores compared to four?
 Interpret and discuss your results.
 
+```{r}
+s2s1 <- (S2/S1)/2
+s3s2 <- (S3/S2)/3
+s4s3 <- (S4/S3)/4
+s5s4 <- (S5/S4)/5
+```
 
 # Question 9: recommendation
 
