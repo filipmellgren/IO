@@ -38,6 +38,15 @@ big-box stores rather than all stores in your analysis. Is it plausible to
 assume that there is a separate market only for big-box stores? Why
 or why not?
 
+
+Pros: 
+* focuses the analysis on an important aspect of competition
+* This allows for a rich model of competition and profitability
+
+Cons: 
+* Might fail to take into account crucial asepcts of competition 
+* Not context specific.
+
 Argue about what the market is. Go to: lecture 2.
 * SSNIP
 * Other tests
@@ -63,13 +72,14 @@ df %>% group_by(stores) %>%
 Graphically illustrate the relationship between population and the number of stores in local markets. Moreover, show a histogram of local market population across markets with different number of hypermarkets
 
 ```{r}
-df %>% ggplot(aes(x = factor(stores), y = pop)) +
+  df %>% ggplot(aes(x = factor(stores), y = pop)) +
   geom_violin(alpha=0.5, scale = "count", adjust = 1) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
-  labs(title = "Heteroskedastic relationship", 
+  labs(title = "Title", 
        caption = "A small amount of random noise was added to each point to better convey intuition about the conditional distribution",
   tag = "Graph 1", x = "Number of stores", y = "Population (1000's)", 
-  color = "Stores", fill = "Stores")
+  color = "Stores", fill = "Stores") 
+
 ```
 Show a histogram of local market population across markets with different number of hy-
 permarkets.
@@ -111,7 +121,10 @@ corr_df <- df %>% map(function(x) cor(df$stores, x)) %>%
 summary_df <- full_join(summary_df, sd_df) %>% full_join(corr_df)
 ```
 
+
 "interpret your findings here"
+
+Should we create a consumption per capita variable?
 
 # Question 5 Variables included in the analysis
 
@@ -166,9 +179,6 @@ $F = \gamma_1 + \gamma_L W_L + \sum_{n = 2}^N \gamma_N: g1 - g5$
 
 Program gives all a_i, g_i, variable profit shifters betas: (young, ) cost shifters lambdas: (-1.84, 3.96), 
 
-offset(pop) sets coef to 1.
-
-Idea: Add a_1, a_2, ... a_5, g_1, ... g_5 as dummies for each store value
 
 # Question 7 calculate entry thresholds
 Calculate entry thresholds based on your estimated coefficients and
