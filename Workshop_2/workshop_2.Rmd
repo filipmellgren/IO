@@ -162,6 +162,8 @@ Comment on including both pos_gpop and neg_gpop, may be a non linearity here.
 
 # Question 5 Variables included in the analysis
 David
+
+Note: We excluded wage from the variable costs in the end. Marginally increased significance.
 Based on the data set at hand, what variables would you include in each part of the profit function in equation (1)? Justify your answer.
 
 In the given data set, we have the following variables: pop, dist, gpop, gpop, pos_gpop, neg_gpop, s_kids, s_pens, s_young, s_women, consumption, hprice, hsold, wage. The task is to decide which of these to include and how to classify them into the following category variables: Y (population variables), X(local market characteristics) and W(cost shifters)
@@ -288,15 +290,39 @@ Motivate why we don't include non significant variables in here. (dont want to i
 
 ```{r}
 # beta1*s_kids + beta2*s_young + beta3*s_pens+ beta4*s_women + beta5*cons_pc + beta6*wage
-Xbar <- df %>% dplyr::select(s_kids, s_young, s_pens, s_women, cons_pc, wage) %>% summarize(mean())
-Wbar <- 
+g1 <- 8.93
+g2 <- 1.08
+g3 <- 1.05
+g4 <- 0.0695
+g5 <- 0.359
+a1 <- -3.62
+a2 <- 0.0395
+a3 <- 0.085
+a4 <- 0.417
+a5 <- 0.102
+gL <- 0.37 # hprice
+avg_hprice <- mean(df$hprice)
+gL2 <- -3.81 # wages
+avg_wage <- mean(df$wage)
+beta1 <- -6.86 # fraction kids
+avg_s_kids <- mean(df$s_kids)
+beta2 <- -3.19 # fraction young
+avg_s_young <- mean(df$s_young)
+beta3 <- 0.213 # fraction pensioners
+avg_s_pens <- mean(df$s_pens)
+beta4 <- 12.5 # fraction women
+avg_s_women <- mean(df$s_women)
+beta5 <- -0.0882 # consumption per capita
+avg_cons_pc <- mean(df$cons_pc)
 
-#S1 <- (g1 + gL* Wbar) / (a1 + Xbar*betahat)
-#S2 <- (g1 + gL* Wbar + g2) / (a1 + Xbar*betahat - a2)
-#S3 <- (g1 + gL* Wbar + g2 + g3) / (a1 + Xbar*betahat - a2 - a3)
-#S4 <- (g1 + gL* Wbar + g2 + g3 + g4) / (a1 + Xbar*betahat - a2 - a3 - a4)
-#S5 <- (g1 + gL* Wbar + g2 + g3 + g4 + g5) / (a1 + Xbar*betahat - a2 - a3 - a4 - a5)
+
+S1 <- (g1 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc)
+S2 <- (g1 + g2 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc - a2)
+S3 <- (g1 + g2 + g3 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc - a2 - a3)
+S4 <- (g1 + g2 + g3 + g4 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc - a2 - a3 - a4)
+S5 <- (g1 + g2 + g3 + g4 + g5 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc - a2 - a3 - a4 - a5)
 ```
+
 
 
 
@@ -308,10 +334,19 @@ change when there are three big-box stores compared to two, four bigbox stores c
 Interpret and discuss your results.
 
 ```{r}
-#s2s1 <- (S2/S1)/2
-#s3s2 <- (S3/S2)/3
-#s4s3 <- (S4/S3)/4
-#s5s4 <- (S5/S4)/5
+s2s1 <- (S2/2)/(S1)
+s3s2 <- (S3/3)/(S2/2)
+s4s3 <- (S4/4)/(S3/3)
+s5s4 <- (S5/5)/(S4/4)
+```
+
+```{r}
+Entry_threshold <- c(S1, S2, S3, S4, S5)
+per_firm_entry_threshold <- Entry_threshold/(1:5)
+Entry_threshold_ratios <- c(s2s1, s3s2, s4s3, s5s4, 1)
+
+table <- rbind(Entry_threshold, per_firm_entry_threshold, Entry_threshold_ratios)
+plot(Entry_threshold_ratios)
 ```
 
 # Question 9: recommendation
