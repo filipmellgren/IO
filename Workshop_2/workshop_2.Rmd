@@ -228,14 +228,16 @@ Looking at housing market variables, hprice will be positively correlated with c
 
 
 # Question 6 ordered_probit script file
-Filip
+Filip (table)
+Chris 
 Specify and estimate the entry model by BR (1991) using the available
 data. The do-file “BR Estim.do” is available on the course web page.
 Discuss your results (BR Table 4).
 
+Comment on the as the gs and the values of some coeffients. The signs are as we expect, except for... comment on magnitude.
+
 
 Do file with the estimateion.
-
 Ordered probit, what's the probability to observe 1, 2, 3 ,etc...
 Important to specify probabilities to plug into likelihood function and plugginf in parameters that maximise probaility of observing the data.
 
@@ -269,18 +271,25 @@ Program gives all a_i, g_i, variable profit shifters betas: (young, ) cost shift
 
 
 # Question 7 calculate entry thresholds
+Filip
 Calculate entry thresholds based on your estimated coefficients and
 the average values of the exogenous variables. The entry thresholds
 are given by [complexity]
+
+$S_N = \frac{\hat{\gamma}_1 + \hat{\gamma}_L \bar{W}_L + \sum^N_{n=2}\hat{\gamma_n}} {\hat{\alpha}_1 + \bar{X}\hat{\beta} - \sum_{n=2}^N \hat{\alpha}_n}$
+
 
 where the bars indicate average values. How many individuals are required for a monopolist to operate? How many individuals are required
 for two, three, four and five stores, respectively, to operate? Explain.
 (BR Table 5, left panel A)
 
+Motivate why we don't include non significant variables in here. (dont want to include noise)
+
+
 ```{r}
-# Not ready to run. Need to know what variables goes into X and W
-#Xbar <- df %>% select("X-variables") %>% summarize(mean())
-#Wbar <- 
+# beta1*s_kids + beta2*s_young + beta3*s_pens+ beta4*s_women + beta5*cons_pc + beta6*wage
+Xbar <- df %>% dplyr::select(s_kids, s_young, s_pens, s_women, cons_pc, wage) %>% summarize(mean())
+Wbar <- 
 
 #S1 <- (g1 + gL* Wbar) / (a1 + Xbar*betahat)
 #S2 <- (g1 + gL* Wbar + g2) / (a1 + Xbar*betahat - a2)
@@ -292,6 +301,7 @@ for two, three, four and five stores, respectively, to operate? Explain.
 
 
 # Question 8: per firm entry threshold
+Chris
 Construct per-firm entry threshold ratios (BR Table 5, right panel A).
 How does the intensity of competition change when there are two bigbox stores compared to one? How does the intensity of competition
 change when there are three big-box stores compared to two, four bigbox stores compared to three, and five big-box stores compared to four?
@@ -305,9 +315,10 @@ Interpret and discuss your results.
 ```
 
 # Question 9: recommendation
-
+David
 What types of local markets would you recommend the international
 retail firm to enter? Why?
+
 
 # Question 10 limitiations
 The performed analysis relies on several assumptions. Explain the limitations of your analysis to the retail firm.
