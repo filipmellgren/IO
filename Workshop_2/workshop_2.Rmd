@@ -40,12 +40,27 @@ or why not?
 
 
 Pros: 
-* focuses the analysis on an important aspect of competition
-* This allows for a rich model of competition and profitability
+* focuses the analysis on an important aspect of competition; it might be the case that the market constrained to big-box stores behaves differently than a market including all types of store. 
+* A more narrow approach allows for a richer model of competition and profitability. 
 
 Cons: 
-* Might fail to take into account crucial asepcts of competition 
+* Might fail to take into account crucial asepcts of competition; if smaller stores are competing in the same market, leaving those out of the analysis might lead to severe strategic mistakes. 
 * Not context specific.
+
+To decide whether it is plausible to assume that a separate markets exists for big-box stores, five different strategies are available: Qualitative evidence, Price, Natural Experiments, Estimation of price elasticities and the Hypothetical Monopolist Test. 
+
+Qualitative evidence: As we have no qualitative data, this approach is not suitable. One could argue, with only qualitative reasoning as basis, that big-box stores qualitatively offer similar products as other stores, and hence that big-box stores should not be considered a separat market. 
+
+Price analysis: This type of analysis relies on observeing correlations and co-movements among substitutes. However, as this type of price data is not available for other stores than the big-box ones, this approach is not suitable. 
+
+Natural experiments: This approach relies on exogenous shocks to price for estimating cross-price elasticities. Again, we lack data, making the approach unsuitable. 
+
+Estimation of substitution effects: This approach relies on using revealed and stated preferences. Again, we lack this type of data.
+
+Hypothetical Monopolist Test: In this approach, we determeine the set of products/geographical areas that impose constraints on each other's ability to exploit market power. Often a SSNIP-test (Small and Significant Nontransitory increase in Price) is used. We consider a hypothetical monopolist and ask the question: Would it be profitable to raise prices by 5-10 percent? Appled to this case, the question is "Would it be profitable for a big-box store monopolist to increase prices with 5-10 %?".
+
+As we lack data of demand elasticities, we have to rely on reason and assumptions. As an important reason for shopping at big-box stores is price, it is likely that a significant chunk of customers would switch and go to a different type of store if prices would increase by 5-10 %. However, whether this effect is large enough to off-set the increase in profit from remaining customers in ambiguous. 
+
 
 Argue about what the market is. Go to: lecture 2.
 * SSNIP
@@ -126,19 +141,60 @@ summary_df <- full_join(summary_df, sd_df) %>% full_join(corr_df)
 
 Should we create a consumption per capita variable?
 
+Should we create a consumption per capita variable?
+Yes, I think this would be a nice add here! 
+
 # Question 5 Variables included in the analysis
 
 Based on the data set at hand, what variables would you include in each part of the profit function in equation (1)? Justify your answer.
 
-See up thumbed image for better classification
+In the given data set, we have the following variables: pop, dist, gpop, gpop, pos_gpop, neg_gpop, s_kids, s_pens, s_young, s_women, consumption, hprice, hsold, wage. The task is to decide which of these to include and how to classify them into the following category variables: Y (population variables), X(local market characteristics) and W(cost shifters)
 
+We try out three different specification:
+
+1) Classification from first group session (Filip and David):
+This classification is based on the following rule: We allocate all of the variables available to the category we deem to be "best fit". 
 Y: pop, dist, 
 X: gpop, pos_gpop, neg_gpop, s_kids, s_pens, s_young, s_women, consumption
 W: hprice, hsold, wage, 
 
+2) Classification from "thumbed" image:
+[Reason by Chris]
+Y: pos_pop, neg_gpop
+X: s_young, s_pens, s_women, consumption
+W: hprice, wage
 
-* What to include in S, V and F? Motivate why we include these variables
-* Discuss but iterate a bit 
+3) Classification best fitting with Bresnahan & Reiss:
+Bresnahan & Reiss use the following setup:
+
+Y describes market size, Z and W shift per capita demand and costs
+
+Y:
+Variables included: town population, nearby population, positive growth, negative growth, commuters out of the county 
+(We include population within 10 miles of town, nearby population, to allow the population surrounding a town to increase demand.10 The growth variables-positive growth and negative growth-represent, respectively, the positive and negative growth in town population from 1970 to 1980. These growth terms capture entrants' asymmetric expectations about future market growth, as well as lags in responses to past growth (see, e.g., Hause and Du Rietz 1984; Dixit 1989). We include the variable commuters out of the county to check our market definition.)
+
+X: 
+Variables included: BIRTHS, ELD, PINC, LNHDD, HUNIT (Not used for all industries.), HVAL (Not used for all industries.), FFRAC (Not used for all industries.)
+(We included per capita income in each industry's specification because consumer income usually affects the demand for goods and services. We included the number of births and the number of elderly residents in both doctors' and dentists' profit functions to control for demographic variation in the demand for and cost of health care services. Because these variables summarize both demand and cost conditions, we do not attempt to draw structural inferences about the signs of their coefficients.)
+
+W: 
+Variables included: LANDV
+(We include the price of agricultural land in it to capture intermarket variation in land costs.)
+
+Following the reasoning by Bresnahan and Reiss, we suggest the following specification:
+
+
+Y: pop, gpop, pos_gpop, neg_gpop [I guess we should exclude one here for collinearity reasons, not sure which one though]
+As these are the variables that best capture market size in terms of potential customers over time. 
+
+X (local market characteristics): s_kids, s_pens, s_young, s_women, consumption, wage, dist
+As these are the variables that are most likely to describe the buying behavior of the potential customers: Kids and pensioners are likely to spend less, while young people and women are likely to spend more. Similarily, higher purchasing power and higher wages implies higher probability of buying more. The share of population with a store close is also included, as people living closer to stores are more likely to to engage in spontaneous shopping. 
+
+W (fixed costs): hprice, hsold.
+The average price pre square-meter of houses sold is a proxy and captures the cost of buying the facility. 
+The number of houses sold captures the search cost of finding a suitable facility. 
+
+
 
 # Question 6 ordered_probit script file
 Specify and estimate the entry model by BR (1991) using the available
