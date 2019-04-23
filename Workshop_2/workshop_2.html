@@ -360,6 +360,9 @@ summary_df &lt;-<span class="st"> </span><span class="kw">full_join</span>(summa
 </div>
 <div id="question-5-variables-included-in-the-analysis" class="section level1">
 <h1>Question 5 Variables included in the analysis</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Begin by doing some feature engineering:</span>
+df &lt;-<span class="st"> </span>df <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">close_pop =</span> dist <span class="op">*</span><span class="st"> </span>pop,
+              <span class="dt">cons_pc =</span> consumption<span class="op">/</span>pop)</code></pre></div>
 <p>Based on the data set at hand, what variables would you include in each part of the profit function in equation (1)? Justify your answer.</p>
 <p>In the given data set, we have the following variables: pop, dist, gpop, gpop, pos_gpop, neg_gpop, s_kids, s_pens, s_young, s_women, consumption, hprice, hsold, wage. The task is to decide which of these to include and how to classify them into the following category variables: Y (population variables), X(local market characteristics) and W(cost shifters)</p>
 <p>We try out three different specification:</p>

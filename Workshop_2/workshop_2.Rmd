@@ -32,7 +32,7 @@ df <- df %>% as_tibble %>% drop_na()
 ```
 
 # Question 1. Premises of the analysis 
-
+David
 Explain to the retail firm what are the pros and cons of using only
 big-box stores rather than all stores in your analysis. Is it plausible to
 assume that there is a separate market only for big-box stores? Why
@@ -46,10 +46,12 @@ Natural experiments in the US also show substitution both on the demand side and
 
 
 Pros: 
+
 * focuses the analysis on an important aspect of competition; it might be the case that the market constrained to big-box stores behaves differently than a market including all types of store. 
 * A more narrow approach allows for a richer model of competition and profitability. 
 
 Cons: 
+
 * Might fail to take into account crucial asepcts of competition; if smaller stores are competing in the same market, leaving those out of the analysis might lead to severe strategic mistakes. 
 * Not context specific.
 
@@ -75,6 +77,7 @@ Argue about what the market is. Go to: lecture 2.
 Google scholar for sources
 
 # Question 2. Distribution of big box stores
+Chris
 Show the distribution of the number of big-box stores across local markets (BR Table 2). Comment.
 
 
@@ -89,6 +92,7 @@ df %>% group_by(stores) %>%
 CH: We note the bimodal distribution.
 
 # Question 3. Graphically illustrate relationship
+Filip
 
 Graphically illustrate the relationship between population and the number of stores in local markets. Moreover, show a histogram of local market population across markets with different number of hypermarkets
 
@@ -96,8 +100,8 @@ Graphically illustrate the relationship between population and the number of sto
   df %>% ggplot(aes(x = factor(stores), y = pop)) +
   geom_violin(alpha=0.5, scale = "count", adjust = 1) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
-  labs(title = "Title", 
-       caption = "A small amount of random noise was added to each point to better convey intuition about the conditional distribution",
+  labs(title = "Small municipalities can support having many stores", 
+       caption = "The 'violin' plot shows how the density is distributed across the various categories.",
   tag = "Graph 1", x = "Number of stores", y = "Population (1000's)", 
   color = "Stores", fill = "Stores") 
 
@@ -121,11 +125,17 @@ ggsave("Store_density_plot.png", height = 10, width = 29.7 - word_margin, units 
 ```
 
 # Question 4 summary stats and descriptives
+David
 Present summary statistics and correlations of the number of stores and local market characteristics. Interpret your findings.
 ```{r summary statistics and correlations}
 # TODO: make latex ready
 
 df <- as_tibble(df)
+
+# Begin by doing some feature engineering:
+df <- df %>% mutate(close_pop = dist * pop,
+              cons_pc = consumption/pop,
+              cons_share = cons_pc/wage)
 
 # pos_gpop and neg_gpop not included
 summary_df <- sapply(dplyr::select(df, everything()), summary)%>% t() %>% round(2) %>%
@@ -140,25 +150,18 @@ corr_df <- df %>% map(function(x) cor(df$stores, x)) %>%
 
 
 summary_df <- full_join(summary_df, sd_df) %>% full_join(corr_df)
+xtable::xtable(summary_df)
 ```
+Comment on strongest correlations.
 
+Comment on creating the consumption per capita variable.
 
-"interpret your findings here"
+Comment on close_pop, how it may be a bad control because it is determined by entry decisions.
 
-Should we create a consumption per capita variable?
-
-Should we create a consumption per capita variable?
-Yes, I think this would be a nice add here! 
+Comment on including both pos_gpop and neg_gpop, may be a non linearity here.
 
 # Question 5 Variables included in the analysis
-```{r}
-# Begin by doing some feature engineering:
-df <- df %>% mutate(close_pop = dist * pop,
-              cons_pc = consumption/pop)
-```
-
-
-
+David
 Based on the data set at hand, what variables would you include in each part of the profit function in equation (1)? Justify your answer.
 
 In the given data set, we have the following variables: pop, dist, gpop, gpop, pos_gpop, neg_gpop, s_kids, s_pens, s_young, s_women, consumption, hprice, hsold, wage. The task is to decide which of these to include and how to classify them into the following category variables: Y (population variables), X(local market characteristics) and W(cost shifters)
@@ -196,16 +199,19 @@ Variables included: LANDV
 
 Following the reasoning by Bresnahan and Reiss, we suggest the following specification:
 
+** THIS IS THE ONE! MY ONE AND ONLY ONE! 
 
-Y: pop, gpop, pos_gpop, neg_gpop [I guess we should exclude one here for collinearity reasons, not sure which one though]
+Y: pop, pos_gpop, neg_gpop 
 As these are the variables that best capture market size in terms of potential customers over time. 
 
-X (local market characteristics): s_kids, s_pens, s_young, s_women, consumption, wage, dist
+X (local market characteristics): s_kids, s_pens, s_young, s_women, consumption per capita, wage
 As these are the variables that are most likely to describe the buying behavior of the potential customers: Kids and pensioners are likely to spend less, while young people and women are likely to spend more. Similarily, higher purchasing power and higher wages implies higher probability of buying more. The share of population with a store close is also included, as people living closer to stores are more likely to to engage in spontaneous shopping. 
 
-W (fixed costs): hprice, hsold.
+Wage enters into variable cost
+
+W (fixed costs): hprice, hsold, wage
 The average price pre square-meter of houses sold is a proxy and captures the cost of buying the facility. 
-The number of houses sold captures the search cost of finding a suitable facility. 
+The number of houses sold captures the search cost of finding a suitable facility. Keep this point!
 
 
 CH: The BR 1991 model constructs a profit formula by relating the available variables into three separate models – market size, variable profits, and fixed costs. Variable profits and fixed costs are both parametrized such that margins are falling in the number of firms.
@@ -222,6 +228,7 @@ Looking at housing market variables, hprice will be positively correlated with c
 
 
 # Question 6 ordered_probit script file
+Filip
 Specify and estimate the entry model by BR (1991) using the available
 data. The do-file “BR Estim.do” is available on the course web page.
 Discuss your results (BR Table 4).
