@@ -38,6 +38,12 @@ big-box stores rather than all stores in your analysis. Is it plausible to
 assume that there is a separate market only for big-box stores? Why
 or why not?
 
+CH: The separate market assumption is not strictly plausible in our view, but is prohibitively restrictive analyticall. 
+
+Qualitative evidence is of substantial but inexhaustive overlap between the services offered by big-box retailers and by ‘small-box’ (plausible substitutes based on characteristics and intended use). Within this overlap there is underlap between the different constituent small retailers. Furthermore, big-boxes have distinct characteristics they don’t share with smaller stores, offering convenience and scale economies. 
+
+Natural experiments in the US also show substitution both on the demand side and in the labour market. Haltiwanger, Jarmin & Krizan 2009 find big box entry reduces employment growth in both single unit and small chain retailers, but only with both immediate area and detailed industry in common. (https://www2.census.gov/ces/wp/2009/CES-WP-09-34.pdf) Similarly, Dube, Lester & Eidlin 2007 found lower average and aggregate retail worker earnings associated with Walmart’s entry into a county. 
+
 
 Pros: 
 * focuses the analysis on an important aspect of competition; it might be the case that the market constrained to big-box stores behaves differently than a market including all types of store. 
@@ -80,7 +86,7 @@ df %>% group_by(stores) %>%
   t() %>% round(2) %>% stargazer(title = "Distribution of stores", type = "text") # change from text to latex
 ```
 
-
+CH: We note the bimodal distribution.
 
 # Question 3. Graphically illustrate relationship
 
@@ -200,6 +206,18 @@ As these are the variables that are most likely to describe the buying behavior 
 W (fixed costs): hprice, hsold.
 The average price pre square-meter of houses sold is a proxy and captures the cost of buying the facility. 
 The number of houses sold captures the search cost of finding a suitable facility. 
+
+
+CH: The BR 1991 model constructs a profit formula by relating the available variables into three separate models – market size, variable profits, and fixed costs. Variable profits and fixed costs are both parametrized such that margins are falling in the number of firms.
+
+Variable profits are separate of the market size (population), but depend on the population’s composition and characteristics, to the extent such details bear on how much the population will buy from big box retailers. Our data covers the population shares of children, young people, women and pensioners – (inexhaustive) demographics with different disposable incomes and propensities towards the offerings of big box retailers. Children have no money but imply parents, whose typical age group is typically of a greater income, and whose spending needs and appetite for convenience may favour big box retailers. The presence of young people and pensioners may also be informative for these reasons.  We suspect the share of women might correlate with other demographic variables to bias the estimates
+
+Fixed costs will comprise property and labour; house prices and wages are satisfactory indicators, with no plausible endogeneity concern. 
+
+We note that, insofar as population growth correlates with the number of stores, it is driven more by negative than by positive growth. This asymmetry only makes much sense if we relate the variables to profitability, rather than strictly 'market size'. Population changes are an indicator of the dynamism of an area - people are forward looking and consider the overall prospects and trajectory of a town when making the big decision of moving their life there. This asymmetry can also allow us to simulate the distinction between entrants and incumbents in a model that otherwise treats that profitability conditions as equal.
+
+Looking at housing market variables, hprice will be positively correlated with consumption (simultaneity), and would likely have a similar relationship with variable profit (expensive to live in a commercially thriving area). Hsold is an indicator of economic activity but is likely co-determined with consumption
+
 
 
 
