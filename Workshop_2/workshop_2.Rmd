@@ -106,8 +106,7 @@ Graphically illustrate the relationship between population and the number of sto
   color = "Stores", fill = "Stores") 
 
 ```
-Show a histogram of local market population across markets with different number of hy-
-permarkets.
+
 ```{r density}
 df %>% ggplot(aes(x = pop, fill = as.character(stores),
                   color = as.character(stores) )) +
@@ -115,8 +114,7 @@ df %>% ggplot(aes(x = pop, fill = as.character(stores),
   theme_economist() +
   labs(title = "Large municipalities have more stores", 
        subtitle = "Yet there exists small towns with many stores", 
-       caption = "A caption can be added",
-  tag = "Graph 1", x = "Population (1000's)", y = "Density", 
+  tag = "Graph 2", x = "Population (1000's)", y = "Density", 
   color = "Stores", fill = "Stores")
 ```
 ```{r save_plots}
