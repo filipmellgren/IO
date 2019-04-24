@@ -278,8 +278,8 @@ s5s4 <- (S5/5)/(S4/4)
 Entry_threshold <- c(S1, S2, S3, S4, S5)
 per_firm_entry_threshold <- Entry_threshold/(1:5)
 Entry_threshold_ratios <- c(s2s1, s3s2, s4s3, s5s4, 1)
-
-table <- rbind(Entry_threshold, per_firm_entry_threshold, Entry_threshold_ratios)
+Marginal_absolute_threshold <- Entry_threshold - c(0, Entry_threshold[1:4])
+table <- rbind(Entry_threshold, per_firm_entry_threshold, Entry_threshold_ratios, Marginal_absolute_threshold)
 table %>% round(2) %>% as_tibble(rownames = "Estimate") %>% rename("1" = V1, "2" = V2, 
                                                       "3" = V3, "4" = V4,
                                                       "5" = V5)
@@ -290,9 +290,9 @@ tmp_df <- as_tibble(cbind(Entry_threshold_ratios, c(1:5)))
 tmp_df %>% ggplot(aes(x = V2, y = Entry_threshold_ratios)) +
   geom_point() + scale_fill_economist() + scale_color_economist() +
   theme_economist() +
-  labs(title = "Title", 
-       subtitle = "subtitle", 
-       caption = "A caption can be added",
+  labs(title = "Per-firm entry thresholds", 
+       subtitle = "Competition intensity flattens out after 4 firms", 
+       caption = "Ratio is of the N+1th per-firm threshold to the Nth",
   tag = "Graph 1", x = "Population (1000's)", y = "Density")
 ```
 
