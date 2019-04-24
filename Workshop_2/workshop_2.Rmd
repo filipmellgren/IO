@@ -324,7 +324,12 @@ df <- df %>% mutate(iSNplus1 = case_when(
   stores == 5 ~ NaN))
 df <- df %>% mutate(opportunity = Si - iSNplus1) #excess of actual market size over next store's threshold
 df <- df %>% mutate(rank = dense_rank(desc(opportunity))) #rank by opportunity
-ggplot(drop_na(df), aes(x = rank, y = opportunity)) + geom_point()
+ggplot(drop_na(df), aes(x = rank, y = opportunity)) + geom_point() + 
+  scale_fill_economist() + scale_color_economist() + theme_economist() +
+  labs(title = "Ranked distribution of market opportunity", 
+       subtitle = "One third of municipalities with <5 incumbents* are unsaturated", 
+       caption = "Opportunity is equal to the market's size less its N+1th entry threshold. Markets with 5 incumbents are excluded.",
+  tag = "Graph 4", x = "Opportunity ranking", y = "Opportunity")
 
 targets <- df %>% filter(opportunity > 0) #Create dataset of target markets (+ve opportunity)
 
@@ -332,22 +337,38 @@ targets %>% group_by(stores) %>%
   summarise(n = n()) %>% mutate(freq = n/ sum(n), cum = cumsum(n)/sum(n)) %>%
   t() %>% round(2) %>% stargazer(title = "Distribution of stores", type = "text") # change from text to latex
 
-targets %>% ggplot(aes(x = factor(stores), y = pop)) +
-  geom_violin(alpha=0.5, scale = "count", adjust = 1) +
-  theme_economist() + scale_fill_economist() + scale_color_economist() +
-  labs(title = "Exponential and heteroskedastic relationship", 
-       caption = "The 'violin' plot shows how the density is distributed across the various categories. Large areas indicate the combination is more common.",
-  tag = "Graph 1", x = "Number of stores", y = "Population (10 000's)", 
-  color = "Stores", fill = "Stores") 
+```
 
-targets %>% ggplot(aes(x = pop, fill = as.character(stores),
-                  color = as.character(stores) )) +
-  geom_density(alpha=0.5) + scale_fill_economist() + scale_color_economist() +
-  theme_economist() +
-  labs(title = "Large municipalities have more stores", 
-       subtitle = "Yet there exists small towns with many stores", 
-  tag = "Graph 2", x = "Population (10 000's)", y = "Density", 
-  color = "Stores", fill = "Stores")
+```{r}
+df <- df %>% mutate(FC = g1 + gL*hprice + gL2*wage,
+                    V = a1+ beta1*s_kids + beta2*s_young + beta3*s_pens+ beta4*s_women + beta5*cons_pc ,
+                    S = pop + pos_gpop * lambda1 + neg_gpop * lambda2,
+                    EprofitN = case_when(
+                      stores == 0 ~ NaN,
+                      stores == 1 ~ (S * V - FC),
+                      stores == 2 ~ (S * (V  - a2) - FC  - g2), 
+                      stores == 3 ~ (S * (V  - a2 - a3) - FC  - g2 - g3), 
+                      stores == 4 ~ (S * (V  - a2 - a3 - a4) - FC - g2 - g3 - g4),
+                      stores == 5 ~ (S * (V  - a2 - a3 - a4 - a5) - FC - g2 - g3 - g4 - g5)),
+                    EprofNplus1 = case_when(
+                      stores == 0 ~ (S * V - FC),
+                      stores == 1 ~ (S * (V  - a2) - FC  - g2), 
+                      stores == 2 ~ (S * (V  - a2 - a3) - FC  - g2 - g3), 
+                      stores == 3 ~ (S * (V  - a2 - a3 - a4) - FC - g2 - g3 - g4),
+                      stores == 4 ~ (S * (V  - a2 - a3 - a4 - a5) - FC - g2 - g3 - g4 - g5),
+                      stores == 5 ~ 0))
+    
+posprof <- df %>% filter(EprofNplus1 >0)
+df <- df %>% mutate(ProfitRank = dense_rank(desc(EprofNplus1))) #rank by opportunity
+ggplot(df, aes(x = ProfitRank, y = EprofNplus1, color = as.character(stores))) + geom_point(alpha=1, size=2) + 
+  scale_fill_economist() + theme_economist() + 
+  labs(title = "Ranked distribution of entry profits in expectation", 
+       subtitle = "One third of municipalities with <5 incumbents* present entry profits", 
+       caption = "Markets with 5 incumbents are bunched at zero",
+  tag = "Graph 3", x = "Profitability ranking", y = "Expected entry profits", color = "No. of incumbents")
+
+ranked <- df %>% arrange(EprofNplus1)
+    
 ```
 
 
