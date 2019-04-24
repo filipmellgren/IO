@@ -325,6 +325,29 @@ df <- df %>% mutate(iSNplus1 = case_when(
 df <- df %>% mutate(opportunity = Si - iSNplus1) #excess of actual market size over next store's threshold
 df <- df %>% mutate(rank = dense_rank(desc(opportunity))) #rank by opportunity
 ggplot(drop_na(df), aes(x = rank, y = opportunity)) + geom_point()
+
+targets <- df %>% filter(opportunity > 0) #Create dataset of target markets (+ve opportunity)
+
+targets %>% group_by(stores) %>% 
+  summarise(n = n()) %>% mutate(freq = n/ sum(n), cum = cumsum(n)/sum(n)) %>%
+  t() %>% round(2) %>% stargazer(title = "Distribution of stores", type = "text") # change from text to latex
+
+targets %>% ggplot(aes(x = factor(stores), y = pop)) +
+  geom_violin(alpha=0.5, scale = "count", adjust = 1) +
+  theme_economist() + scale_fill_economist() + scale_color_economist() +
+  labs(title = "Exponential and heteroskedastic relationship", 
+       caption = "The 'violin' plot shows how the density is distributed across the various categories. Large areas indicate the combination is more common.",
+  tag = "Graph 1", x = "Number of stores", y = "Population (10 000's)", 
+  color = "Stores", fill = "Stores") 
+
+targets %>% ggplot(aes(x = pop, fill = as.character(stores),
+                  color = as.character(stores) )) +
+  geom_density(alpha=0.5) + scale_fill_economist() + scale_color_economist() +
+  theme_economist() +
+  labs(title = "Large municipalities have more stores", 
+       subtitle = "Yet there exists small towns with many stores", 
+  tag = "Graph 2", x = "Population (10 000's)", y = "Density", 
+  color = "Stores", fill = "Stores")
 ```
 
 
