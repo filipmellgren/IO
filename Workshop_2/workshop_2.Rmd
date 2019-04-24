@@ -280,10 +280,11 @@ per_firm_entry_threshold <- Entry_threshold/(1:5)
 Entry_threshold_ratios <- c(s2s1, s3s2, s4s3, s5s4, 1)
 Marginal_absolute_threshold <- Entry_threshold - c(0, Entry_threshold[1:4])
 table <- rbind(Entry_threshold, per_firm_entry_threshold, Entry_threshold_ratios, Marginal_absolute_threshold)
-table %>% round(2) %>% as_tibble(rownames = "Estimate") %>% rename("1" = V1, "2" = V2, 
+table <- table %>% round(2) %>% as_tibble(rownames = "Estimate") %>% rename("1" = V1, "2" = V2, 
                                                       "3" = V3, "4" = V4,
                                                       "5" = V5)
 
+xtable::xtable(table)
 ```
 ```{r}
 tmp_df <- as_tibble(cbind(Entry_threshold_ratios, c(1:5)))
