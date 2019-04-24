@@ -78,12 +78,17 @@ Graphically illustrate the relationship between population and the number of sto
   df %>% ggplot(aes(x = factor(stores), y = pop)) +
   geom_violin(alpha=0.5, scale = "count", adjust = 1) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
-  labs(title = "Small municipalities can support having many stores", 
-       caption = "The 'violin' plot shows how the density is distributed across the various categories.",
-  tag = "Graph 1", x = "Number of stores", y = "Population (1000's)", 
+  labs(title = "Exponential and heteroskedastic relationship", 
+       caption = "The 'violin' plot shows how the density is distributed across the various categories. Large areas indicate the combination is more common.",
+  tag = "Graph 1", x = "Number of stores", y = "Population (10 000's)", 
   color = "Stores", fill = "Stores") 
-
 ```
+
+
+```{r save_plots}
+ggsave("Store_violin_plot.png", height = 10, width = 10, units = "cm")
+```
+
 
 ```{r density}
 df %>% ggplot(aes(x = pop, fill = as.character(stores),
@@ -92,7 +97,7 @@ df %>% ggplot(aes(x = pop, fill = as.character(stores),
   theme_economist() +
   labs(title = "Large municipalities have more stores", 
        subtitle = "Yet there exists small towns with many stores", 
-  tag = "Graph 2", x = "Population (1000's)", y = "Density", 
+  tag = "Graph 2", x = "Population (10 000's)", y = "Density", 
   color = "Stores", fill = "Stores")
 ```
 ```{r save_plots}
