@@ -316,10 +316,10 @@ tmp_df <- as_tibble(cbind(Entry_threshold_ratios, c(1:5)))
 tmp_df %>% ggplot(aes(x = V2, y = Entry_threshold_ratios)) +
   geom_point() + scale_fill_economist() + scale_color_economist() +
   theme_economist() +
-  labs(title = "Per-firm entry thresholds", 
+  labs(title = "Per-firm entry threshold ratio", 
        subtitle = "Competition intensity flattens out after 4 firms", 
        caption = "Ratio is of the N+1th per-firm threshold to the Nth",
-  tag = "Graph 3", x = "Number of incumbents", y = "Population per firm")
+  tag = "Graph 3", x = "Number of incumbents", y = "Ratio")
 ```
 
 The per-firm entry thresholds are increasing in the number of firms at a diminishing rate, i.e. competition intensity is increasing and concave in the number of firms. The per-firm duopoly threshold is 42% greater than the monopoly threshold, while the triopoly threshold is only 15% greater than that. Meanwhile, competition intensity is more or less flat beyond 4 firms, with a per-firm threshold ratio barely above 1 at 1.02. Moreover, while the threshold ratios flatten, the absolute marginal entry threshold increases fairly reliably until it peaks at the 4th firm (11.12k), falling to 9.06k for the 5th firm. 
