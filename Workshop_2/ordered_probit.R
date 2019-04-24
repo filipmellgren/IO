@@ -145,6 +145,19 @@ table <- table %>% as_tibble(rownames = "variable") %>%
                       "Positive growth", "Negative growth")) %>%
   rename(Coef. = V1, s.e. = V2)
 
+
+
+table <- table %>% mutate( 
+  Coef = case_when(
+    p < 0.1 & p > 0.05 ~ paste(as.character(round(Coef.,2)), "*"), 
+    p < 0.05 & p > 0.01 ~ paste(as.character(round(Coef.,2)), "**"), 
+    p < 0.01  ~ paste(as.character(round(Coef.,2)), "***"),
+    p > 0.1 ~ as.character(round(Coef.,2))
+  )
+)
+
+table <- table %>% dplyr::select(variable, Coef, s.e.) %>% 
+  mutate(Type = c(1:10, rep("Fixed", 2), rep("Variable",5),rep("Demographic",2)))
 xtable::xtable(table, caption = "ML estimates")
 
 
