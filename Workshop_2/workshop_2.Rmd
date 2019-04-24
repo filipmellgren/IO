@@ -255,6 +255,31 @@ S2 <- (g1 + g2 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + bet
 S3 <- (g1 + g2 + g3 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc - a2 - a3)
 S4 <- (g1 + g2 + g3 + g4 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc - a2 - a3 - a4)
 S5 <- (g1 + g2 + g3 + g4 + g5 + gL* avg_hprice + gL2 * avg_wage) / (a1 + beta1*avg_s_kids + beta2*avg_s_young + beta3*avg_s_pens + beta4*avg_s_women + beta5*avg_cons_pc - a2 - a3 - a4 - a5)
+
+lambda1 <- -1.62
+lambda2 <- 3.03
+df <- df %>% mutate(Si = pop + pos_gpop * lambda1 + neg_gpop * lambda2)
+
+df <- df %>% mutate(iSN = case_when(
+  stores == 0 ~ (gL* hprice + gL2 * wage) / (beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc),
+  stores == 1 ~ (g1 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc),
+  stores == 2 ~ (g1 + g2 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2),
+  stores == 3 ~ (g1 + g2 + g3 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2 - a3),
+  stores == 4 ~ (g1 + g2 + g3 + g4 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2 - a3 - a4),
+  stores == 5 ~ (g1 + g2 + g3 + g4 + g5 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2 - a3 - a4 - a5)))
+
+df <- df %>% mutate(iSNplus1 = case_when(
+  stores == 0 ~ (g1 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc),
+  stores == 1 ~ (g1 + g2 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2),
+  stores == 2 ~ (g1 + g2 + g3 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2 - a3),
+  stores == 3 ~ (g1 + g2 + g3 + g4 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2 - a3 - a4),
+  stores == 4 ~ (g1 + g2 + g3 + g4 + g5 + gL* hprice + gL2 * wage) / (a1 + beta1*s_kids + beta2*s_young + beta3*s_pens + beta4*s_women + beta5*cons_pc - a2 - a3 - a4 - a5),
+  stores == 5 ~ NaN))
+
+df <- df %>% mutate(benchmark = Si - iSN)
+df <- df %>% mutate(ambition = iSNplus1 - Si)
+
+
 ```
 
 
