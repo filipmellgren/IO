@@ -346,7 +346,20 @@ per_firm_entry_threshold <- Entry_threshold/(1:5)
 Entry_threshold_ratios <- c(s2s1, s3s2, s4s3, s5s4, 1)
 
 table <- rbind(Entry_threshold, per_firm_entry_threshold, Entry_threshold_ratios)
-plot(Entry_threshold_ratios)
+table %>% round(2) %>% as_tibble(rownames = "Estimate") %>% rename("1" = V1, "2" = V2, 
+                                                      "3" = V3, "4" = V4,
+                                                      "5" = V5)
+
+```
+```{r}
+tmp_df <- as_tibble(cbind(Entry_threshold_ratios, c(1:5)))
+tmp_df %>% ggplot(aes(x = V2, y = Entry_threshold_ratios)) +
+  geom_point() + scale_fill_economist() + scale_color_economist() +
+  theme_economist() +
+  labs(title = "Title", 
+       subtitle = "subtitle", 
+       caption = "A caption can be added",
+  tag = "Graph 1", x = "Population (1000's)", y = "Density")
 ```
 
 # Question 9: recommendation
