@@ -89,7 +89,7 @@ df %>% group_by(stores) %>%
   t() %>% round(2) %>% stargazer(title = "Distribution of stores", type = "text") # change from text to latex
 ```
 
-CH: We note the bimodal distribution.
+The distribution of the number of big-box stores across local markets is bimodal, with peaks at 2 and 5. More than half of municipalities in our data have 2 or fewer big box retailers, while 9% have none at all. 22% have the maximum observed value of 5. 
 
 # Question 3. Graphically illustrate relationship
 Filip
@@ -359,6 +359,8 @@ tmp_df %>% ggplot(aes(x = V2, y = Entry_threshold_ratios)) +
   tag = "Graph 1", x = "Population (1000's)", y = "Density")
 ```
 
+The per-firm entry thresholds are increasing in the number of firms at a diminishing rate, i.e. competition intensity is increasing and concave in the number of firms. The per-firm duopoly threshold is 42% greater than the monopoly threshold, while the triopoly threshold is only 15% greater than that. Meanwhile, competition intensity is more or less flat beyond 4 firms, with a per-firm threshold ratio barely above 1 at 1.02. Moreover, while the threshold ratios flatten, the absolute marginal entry threshold increases fairly reliably until it peaks at the 4th firm (11.12k), falling to 9.06k for the 5th firm. 
+
 # Question 9: recommendation
 David
 What types of local markets would you recommend the international
@@ -367,6 +369,12 @@ retail firm to enter? Why?
 
 # Question 10 limitiations
 The performed analysis relies on several assumptions. Explain the limitations of your analysis to the retail firm.
+
+•	similar identical profit functions between firms, and 
+•	no product differentiation (including in terms of variety)
+•	error terms distributed i.i.d. ~ N(0,1)
+•	Average profits = 0, only error term is non-zero
+
 
 ## Post lecture code
 $\pi_{Nm} = S(Y, \lambda) V_{Nm}(X, \alpha, \beta) - F_{Nm}(W, \gamma) + \epsilon_m = \tilde{\pi}_{Nm} + \epsilon_m$
