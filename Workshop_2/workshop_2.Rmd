@@ -32,49 +32,27 @@ df <- df %>% as_tibble %>% drop_na()
 ```
 
 # Question 1. Premises of the analysis 
-David
-Explain to the retail firm what are the pros and cons of using only
-big-box stores rather than all stores in your analysis. Is it plausible to
-assume that there is a separate market only for big-box stores? Why
-or why not?
+There are several pros and cons of using only big-box stores rather than all stores in this type of market entry analysis. The perhaps most important (but not the only) pros are:
 
-CH: The separate market assumption is not strictly plausible in our view, but is prohibitively restrictive analyticall. 
+•	Sharper focus of the analysis - The analysis focuses on an important aspect of competition; it might be the case that the market constrained to big-box stores behaves differently than a market including all types of store. 
 
-Qualitative evidence is of substantial but inexhaustive overlap between the services offered by big-box retailers and by ‘small-box’ (plausible substitutes based on characteristics and intended use). Within this overlap there is underlap between the different constituent small retailers. Furthermore, big-boxes have distinct characteristics they don’t share with smaller stores, offering convenience and scale economies. 
+•	Richer model: Following the sharper focus, a more narrow approach allows for a richer model of competition and profitability. 
 
-Natural experiments in the US also show substitution both on the demand side and in the labour market. Haltiwanger, Jarmin & Krizan 2009 find big box entry reduces employment growth in both single unit and small chain retailers, but only with both immediate area and detailed industry in common. (https://www2.census.gov/ces/wp/2009/CES-WP-09-34.pdf) Similarly, Dube, Lester & Eidlin 2007 found lower average and aggregate retail worker earnings associated with Walmart’s entry into a county. 
+Of course, restricting the analysis to only big-box stores also comes with a downside. Some of the cons are:
 
+•	Higher risk of missing crucial aspects – A more limited analysis might fail to take into account crucial aspects of competition; if smaller stores are competing in the same market, leaving those out of the analysis might lead to severe strategic mistakes. 
 
-Pros: 
+•	Not context specific – Leaving out other types of stores might give a skew the context that is implicitly built into models, biasing the estimates if we are unable to find the right control variables. 
 
-* focuses the analysis on an important aspect of competition; it might be the case that the market constrained to big-box stores behaves differently than a market including all types of store. 
-* A more narrow approach allows for a richer model of competition and profitability. 
+When it comes to the question of whether there actually is a separate market for big-box stores, we have to rely on reason and assumption; we lack the data needed to make more sophisticated analyses (such as price analysis, estimation of substitution effects or a hypothetical monopolist test such as the SSNIP-test).
 
-Cons: 
+From our point of view, the separate market assumption is not strictly plausible, but is prohibitively restrictive analytically. There are several reasons for this:
 
-* Might fail to take into account crucial asepcts of competition; if smaller stores are competing in the same market, leaving those out of the analysis might lead to severe strategic mistakes. 
-* Not context specific.
+•	Qualitative evidence is of substantial but inexhaustive overlap between the services offered by big-box retailers and by ‘small-box’ (plausible substitutes based on characteristics and intended use). Within this overlap there is underlap between the different constituent small retailers. Furthermore, big-boxes have distinct characteristics they don’t share with smaller stores, offering convenience and scale economies. 
 
-To decide whether it is plausible to assume that a separate markets exists for big-box stores, five different strategies are available: Qualitative evidence, Price, Natural Experiments, Estimation of price elasticities and the Hypothetical Monopolist Test. 
+•	Natural experiments in the US also show substitution both on the demand side and in the labour market. Haltiwanger, Jarmin & Krizan 2009 find big box entry reduces employment growth in both single unit and small chain retailers, but only with both immediate area and detailed industry in common. (https://www2.census.gov/ces/wp/2009/CES-WP-09-34.pdf) Similarly, Dube, Lester & Eidlin 2007 found lower average and aggregate retail worker earnings associated with Walmart’s entry into a county. 
 
-Qualitative evidence: As we have no qualitative data, this approach is not suitable. One could argue, with only qualitative reasoning as basis, that big-box stores qualitatively offer similar products as other stores, and hence that big-box stores should not be considered a separat market. 
-
-Price analysis: This type of analysis relies on observeing correlations and co-movements among substitutes. However, as this type of price data is not available for other stores than the big-box ones, this approach is not suitable. 
-
-Natural experiments: This approach relies on exogenous shocks to price for estimating cross-price elasticities. Again, we lack data, making the approach unsuitable. 
-
-Estimation of substitution effects: This approach relies on using revealed and stated preferences. Again, we lack this type of data.
-
-Hypothetical Monopolist Test: In this approach, we determeine the set of products/geographical areas that impose constraints on each other's ability to exploit market power. Often a SSNIP-test (Small and Significant Nontransitory increase in Price) is used. We consider a hypothetical monopolist and ask the question: Would it be profitable to raise prices by 5-10 percent? Appled to this case, the question is "Would it be profitable for a big-box store monopolist to increase prices with 5-10 %?".
-
-As we lack data of demand elasticities, we have to rely on reason and assumptions. As an important reason for shopping at big-box stores is price, it is likely that a significant chunk of customers would switch and go to a different type of store if prices would increase by 5-10 %. However, whether this effect is large enough to off-set the increase in profit from remaining customers in ambiguous. 
-
-
-Argue about what the market is. Go to: lecture 2.
-* SSNIP
-* Other tests
-
-Google scholar for sources
+Hence, we can move forward with the analysis. 
 
 # Question 2. Distribution of big box stores
 Chris
@@ -150,80 +128,34 @@ corr_df <- df %>% map(function(x) cor(df$stores, x)) %>%
 summary_df <- full_join(summary_df, sd_df) %>% full_join(corr_df)
 xtable::xtable(summary_df)
 ```
-Comment on strongest correlations.
+Table [table number] presents summary statistics as well as correlations between the number of stores and local market characteristics. Note that we include the variable consumption per capita, as the consumption variable appears to be of aggregate measure rather than per capita. We also include the following created measures:  population (in number) living within two kilometers of a store (close_pop) and a measure of consumption as share of wage (to capture the saving behavior).  
 
-Comment on creating the consumption per capita variable.
+From the table, we draw several interesting observations of the data:
 
-Comment on close_pop, how it may be a bad control because it is determined by entry decisions.
+•	The stores variable has it maximum at 5. This implies that either no municipality has more than five big-box stores, or that larger number has been coded as five in the present data set. 
 
-Comment on including both pos_gpop and neg_gpop, may be a non linearity here.
+•	The variables that correlates strongest with number of stores are population (0.72) and consumption (0.72). Hence, more populous areas where people with higher purchasing live have more stores. Other variables that correlate strongly with number of stores are the share of population living close the stores (0.71) [should this really be used?], the number of houses sold (0.68) and the share of young people (0.54). 
+
+•	The variables that have the lowest correlations with number of stores are share of pensioners (-0.24), consumption per capita (0.02) and share of kids (0.12). Hence the municipalities with many pensioners appears to have a few number of stores, while the number of stores does not vary with consumption per capita and only correlates weakly with the share of kids in the municipality. 
+
+
+[Comments: 
+-	I think we should look into the consumption and consumption per capita variables again. Are we sure?]
+
 
 # Question 5 Variables included in the analysis
-David
+Our preferred specification is obtained through following the type of reasoning used by Bresnahan & Reiss 1991. The model constructs a profit formula by relating the available variables into three separate models – market size, variable profits, and fixed costs. Variable profits and fixed costs are both parametrized such that margins are falling in the number of firms. Given the data set at hand, we land the in following setup: 
 
-Note: We excluded wage from the variable costs in the end. Marginally increased significance.
-Based on the data set at hand, what variables would you include in each part of the profit function in equation (1)? Justify your answer.
+To determine the market size S, we include the following variables in the population variables vector Y:  population (pop), positive population growth (pos_gpop) and negative population growth (neg_gpop). We choose to include both positive and negative growth, as there may be non-linearity present. Note that we leave out the variable gpop to avoid perfect collinearity. 
 
-In the given data set, we have the following variables: pop, dist, gpop, gpop, pos_gpop, neg_gpop, s_kids, s_pens, s_young, s_women, consumption, hprice, hsold, wage. The task is to decide which of these to include and how to classify them into the following category variables: Y (population variables), X(local market characteristics) and W(cost shifters)
+To determine the variable profits V, we include the following variables in the local market characteristics vector X: share of kids (s_kids), share of pensioners (s_pens), share of young people (s_young), share of women (s_women) and  consumption per capita (cons_pc). We choose to include these as the variable profits are likely to be dependent of population’s composition and characteristics, to the extent such details bear on how much the population will buy from big box retailers. We also include the consumption per capita to capture the willingness to spend. 
 
-We try out three different specification:
+[We do _not_ include wage here?]
 
-1) Classification from first group session (Filip and David):
-This classification is based on the following rule: We allocate all of the variables available to the category we deem to be "best fit". 
-Y: pop, dist, 
-X: gpop, pos_gpop, neg_gpop, s_kids, s_pens, s_young, s_women, consumption
-W: hprice, hsold, wage, 
+To determine the fixed costs F, we include the following variables in the (fixed) cost shifters vector W: average price per square-meter of houses sold (hprice), the number of houses sold (hsold) and the average monthly wage (wage). We include the average price per square-meter of houses sold as it functions as a proxy that captures the cost of buying the facility. 
+The number of houses sold captures the search cost of finding a suitable facility. The average monthly wage captures the fixed costs associated with staffing the stores. 
 
-2) Classification from "thumbed" image:
-[Reason by Chris]
-Y: pos_pop, neg_gpop
-X: s_young, s_pens, s_women, consumption
-W: hprice, wage
-
-3) Classification best fitting with Bresnahan & Reiss:
-Bresnahan & Reiss use the following setup:
-
-Y describes market size, Z and W shift per capita demand and costs
-
-Y:
-Variables included: town population, nearby population, positive growth, negative growth, commuters out of the county 
-(We include population within 10 miles of town, nearby population, to allow the population surrounding a town to increase demand.10 The growth variables-positive growth and negative growth-represent, respectively, the positive and negative growth in town population from 1970 to 1980. These growth terms capture entrants' asymmetric expectations about future market growth, as well as lags in responses to past growth (see, e.g., Hause and Du Rietz 1984; Dixit 1989). We include the variable commuters out of the county to check our market definition.)
-
-X: 
-Variables included: BIRTHS, ELD, PINC, LNHDD, HUNIT (Not used for all industries.), HVAL (Not used for all industries.), FFRAC (Not used for all industries.)
-(We included per capita income in each industry's specification because consumer income usually affects the demand for goods and services. We included the number of births and the number of elderly residents in both doctors' and dentists' profit functions to control for demographic variation in the demand for and cost of health care services. Because these variables summarize both demand and cost conditions, we do not attempt to draw structural inferences about the signs of their coefficients.)
-
-W: 
-Variables included: LANDV
-(We include the price of agricultural land in it to capture intermarket variation in land costs.)
-
-Following the reasoning by Bresnahan and Reiss, we suggest the following specification:
-
-** THIS IS THE ONE! MY ONE AND ONLY ONE! 
-
-Y: pop, pos_gpop, neg_gpop 
-As these are the variables that best capture market size in terms of potential customers over time. 
-
-X (local market characteristics): s_kids, s_pens, s_young, s_women, consumption per capita, wage
-As these are the variables that are most likely to describe the buying behavior of the potential customers: Kids and pensioners are likely to spend less, while young people and women are likely to spend more. Similarily, higher purchasing power and higher wages implies higher probability of buying more. The share of population with a store close is also included, as people living closer to stores are more likely to to engage in spontaneous shopping. 
-
-Wage enters into variable cost
-
-W (fixed costs): hprice, hsold, wage
-The average price pre square-meter of houses sold is a proxy and captures the cost of buying the facility. 
-The number of houses sold captures the search cost of finding a suitable facility. Keep this point!
-
-
-CH: The BR 1991 model constructs a profit formula by relating the available variables into three separate models – market size, variable profits, and fixed costs. Variable profits and fixed costs are both parametrized such that margins are falling in the number of firms.
-
-Variable profits are separate of the market size (population), but depend on the population’s composition and characteristics, to the extent such details bear on how much the population will buy from big box retailers. Our data covers the population shares of children, young people, women and pensioners – (inexhaustive) demographics with different disposable incomes and propensities towards the offerings of big box retailers. Children have no money but imply parents, whose typical age group is typically of a greater income, and whose spending needs and appetite for convenience may favour big box retailers. The presence of young people and pensioners may also be informative for these reasons.  We suspect the share of women might correlate with other demographic variables to bias the estimates
-
-Fixed costs will comprise property and labour; house prices and wages are satisfactory indicators, with no plausible endogeneity concern. 
-
-We note that, insofar as population growth correlates with the number of stores, it is driven more by negative than by positive growth. This asymmetry only makes much sense if we relate the variables to profitability, rather than strictly 'market size'. Population changes are an indicator of the dynamism of an area - people are forward looking and consider the overall prospects and trajectory of a town when making the big decision of moving their life there. This asymmetry can also allow us to simulate the distinction between entrants and incumbents in a model that otherwise treats that profitability conditions as equal.
-
-Looking at housing market variables, hprice will be positively correlated with consumption (simultaneity), and would likely have a similar relationship with variable profit (expensive to live in a commercially thriving area). Hsold is an indicator of economic activity but is likely co-determined with consumption
-
+Note that we choose to not use the share of population with a store within 2 kilometers (dist), as it might function as a bad control: it is likely to be determined by the dependent variable in the profit equation. 
 
 
 
