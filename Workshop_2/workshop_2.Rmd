@@ -152,8 +152,8 @@ To determine the variable profits V, we include the following variables in the l
 
 [We do _not_ include wage here?]
 
-To determine the fixed costs F, we include the following variables in the (fixed) cost shifters vector W: average price per square-meter of houses sold (hprice), the number of houses sold (hsold) and the average monthly wage (wage). We include the average price per square-meter of houses sold as it functions as a proxy that captures the cost of buying the facility. 
-The number of houses sold captures the search cost of finding a suitable facility. The average monthly wage captures the fixed costs associated with staffing the stores. 
+To determine the fixed costs F, we include the following variables in the (fixed) cost shifters vector W: average price per square-meter of houses sold (hprice), and the average monthly wage (wage). We include the average price per square-meter of houses sold as it functions as a proxy that captures the cost of buying the facility. 
+ The average monthly wage captures the fixed costs associated with staffing the stores. 
 
 Note that we choose to not use the share of population with a store within 2 kilometers (dist), as it might function as a bad control: it is likely to be determined by the dependent variable in the profit equation. 
 
