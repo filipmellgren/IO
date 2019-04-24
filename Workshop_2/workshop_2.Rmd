@@ -274,16 +274,15 @@ Program gives all a_i, g_i, variable profit shifters betas: (young, ) cost shift
 Filip
 Calculate entry thresholds based on your estimated coefficients and
 the average values of the exogenous variables. The entry thresholds
-are given by [complexity]
-
-$S_N = \frac{\hat{\gamma}_1 + \hat{\gamma}_L \bar{W}_L + \sum^N_{n=2}\hat{\gamma_n}} {\hat{\alpha}_1 + \bar{X}\hat{\beta} - \sum_{n=2}^N \hat{\alpha}_n}$
-
+are given by
 
 where the bars indicate average values. How many individuals are required for a monopolist to operate? How many individuals are required
 for two, three, four and five stores, respectively, to operate? Explain.
 (BR Table 5, left panel A)
 
-Motivate why we don't include non significant variables in here. (dont want to include noise)
+The first row of Table X  shows how many (thousands of) individuals are required to sustain the number of businesses as indicated by the respective column. These values were calculated using the full set of coefficients from the maximum likelihood specifcation, including insignificant estimates despite the fact that these may mostly contain noise following Bresnahan and Reiss (1991). 
+
+The results indicate that being the second or fourth entrant dramatically increases the competition on the market. Whereas the third and fifth entrant don't seem to change the degree of competition significantly. The dramatic change in competition incurred by the fourth entrant is surprising, and might reflect 
 
 
 ```{r}
