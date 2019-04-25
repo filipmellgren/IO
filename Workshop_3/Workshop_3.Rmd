@@ -26,6 +26,7 @@ When you click the **Knit** button a document will be generated that includes bo
 library(rio)
 library(tidyverse)
 ```
+# Step 0
 ```{r}
 df <- import("/Users/filip/Documents/Data_analysis_R/IO/Workshop_3/Cars.dta")
 ```
@@ -33,4 +34,37 @@ df <- import("/Users/filip/Documents/Data_analysis_R/IO/Workshop_3/Cars.dta")
 ```{r}
 df %<>% as_tibble() %>% glimpse()
 ```
+# 1 Summary statistics
+Show and discuss summary statistics of the car market in the five EU countries. Focus on what you believe are key variables given the questions at hand.
+
+```{r}
+summary_stats <- function(x){
+  summary <- rbind(mean(x), sd(x)) 
+  return(summary)
+}
+
+
+df %>% select(pr, year) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2)
+```
+
+
+# 2 Hedonic price regression
+
+# 3 Market shares
+
+# 4 Logit demand
+
+# 5 Nested logit demand
+
+# 6 Instruments
+
+# 7 Nash Bertrand
+
+# 8 Merger
+
+# 9 Efficient merger
+
+# 10 2 more features
+
+
 
