@@ -25,6 +25,7 @@ When you click the **Knit** button a document will be generated that includes bo
 ```{r cars}
 library(rio)
 library(tidyverse)
+library(glue)
 ```
 # Step 0
 ```{r}
@@ -38,27 +39,73 @@ df %<>% as_tibble() %>% glimpse()
 Show and discuss summary statistics of the car market in the five EU countries. Focus on what you believe are key variables given the questions at hand.
 
 ```{r}
+# TODO: Add necessary summary stats. Count? Corr?
 summary_stats <- function(x){
-  summary <- rbind(mean(x), sd(x)) 
+  summary <- rbind(mean(x), sd(x), min(x), max(x)) 
   return(summary)
 }
+```
 
-
-df %>% select(pr, year) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2)
+```{r}
+# TODO: Group by country? If so, stack them, keep the same columns
+df %>% select(pr, year) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
 ```
 
 
 # 2 Hedonic price regression
 
+
+```{r}
+# TODO: add the correct variables to X
+X <- glue("year", "segment", "qu",  .sep = "+")
+formula <- glue("pr ~", X)
+lm(formula, data = df)
+```
+
+
 # 3 Market shares
+
+Calculate the following market shares: (a) the market share of each
+car model, and (b) the market share of each car model in its segment.
+Discuss your findings. Assume that the total market size is the number
+of households, approximated by total population divided by 4
+
+```{r}
+
+```
+
 
 # 4 Logit demand
 
+Estimate demand using a logit specification (Berry, 1994). Use different estimators such as OLS and fixed effects. Use your estimated
+coefficients to calculate own-price elasticities. Interpret your results.
+Are there any interesting differences across firms?
+```{r}
+
+```
+
+
+
 # 5 Nested logit demand
+Estimate demand using a nested logit specification where segment is
+defined as the nest (Berry, 1994). Use different estimators such as OLS
+and fixed effects. Use your estimated coefficients to calculate own-price
+elasticities. Discuss your results.
+```{r}
+
+```
+
 
 # 6 Instruments
+Suggest two types of instruments that could be used to solve the endogeneity problem of the price variable. Why do you propose these
+instruments?
 
 # 7 Nash Bertrand
+Assume Nash-Bertrand competition in prices on the supply side. Calculate the implied marginal costs, markups and Lerner index based on
+the estimates from the nested logit specification in [5]. Present firmlevel averages of price, marginal cost, markup and the Lerner index.
+Do you think your results are economically meaningful? Explain and
+discuss.
+
 
 # 8 Merger
 
