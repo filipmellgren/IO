@@ -22,14 +22,20 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
+```{r cars, include = FALSE}
 library(rio)
 library(tidyverse)
-library(glue)
+library(AER)
+library(ggthemes)
+library(stargazer)
+library(reshape2)
+library(xtable)
+library(plm)
 ```
 # Step 0
 ```{r}
 df <- import("/Users/filip/Documents/Data_analysis_R/IO/Workshop_3/Cars.dta")
+df <- df %>% mutate(year1 = year, country1 = country) %>% unite(yearcountry, c("year1", "country1"))
 ```
 
 ```{r}
@@ -41,25 +47,50 @@ Show and discuss summary statistics of the car market in the five EU countries. 
 ```{r}
 # TODO: Add necessary summary stats. Count? Corr?
 summary_stats <- function(x){
-  summary <- rbind(mean(x), sd(x), min(x), max(x)) 
+  summary <- rbind(mean(x), sd(x, na.rm = TRUE), min(x, na.rm = TRUE), max(x, na.rm = TRUE)) 
   return(summary)
 }
 ```
 
 ```{r}
 # TODO: Group by country? If so, stack them, keep the same columns
-df %>% select(pr, year) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
+df %>% 
+  select(year, country, co, segment, domestic, firm, qu, price, horsepower, fuel, width, height, pop) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
 ```
+```{r}
+# TODO: Add numbers to each cell
+cormatdf <- df %>% select(year, country, domestic, qu, price, horsepower, fuel, width, height, pop)
+cormat <- round(cor(cormatdf),2)
 
+melted_cormat <- melt(cormat)
+
+melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + theme_economist() + scale_colour_economist() +
+  labs(title = "TILE", y = " ", x = " ",
+       caption = "caption") +
+  scale_fill_gradient2(low = "#336666", high = "#664033", mid = "white", 
+   midpoint = 0, limit = c(-1,1), space = "Lab", 
+    name="Pearson\nCorrelation")
+```
+Excluded co (model code), segment (ordinal variable), firm
 
 # 2 Hedonic price regression
-
+Add segment dummies?
 
 ```{r}
 # TODO: add the correct variables to X
-X <- glue("year", "segment", "qu",  .sep = "+")
-formula <- glue("pr ~", X)
+X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", 
+          "country2","country3", "country4", "country5", .sep = "+")
+
+formula <- glue("log(price) ~", X)
 lm(formula, data = df)
+
+```
+```{r}
+# TODO: define countryyear variable? 
+# TODO: include at all?
+#plm(formula, data = df, index = c('region', 'year'), model = 'within',
+ #   effect = 'twoways')
 ```
 
 
@@ -71,7 +102,16 @@ Discuss your findings. Assume that the total market size is the number
 of households, approximated by total population divided by 4
 
 ```{r}
+# TODO: create segment size
+# TODO: present m.share as percentages
 
+df <- df %>% mutate(msize = pop/4, 
+              mshare = qu/msize)
+df <- df %>% group_by(segment, yearcountry) %>% mutate(tot_s = sum(qu))
+df <- df %>% mutate(mshare_s = qu / tot_s)
+
+#df %>% 
+#  select(msize, mshare) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(5) %>% #as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
 ```
 
 
@@ -82,8 +122,39 @@ coefficients to calculate own-price elasticities. Interpret your results.
 Are there any interesting differences across firms?
 ```{r}
 
+df <- df %>% group_by(yearcountry) %>% mutate(tot_qu = sum(qu),
+                                        oshare = 1 - tot_qu/msize)
+
+df <- df %>% mutate(ln_dmshare = log(mshare) - log(oshare))
 ```
 
+```{r}
+X <- glue("price", "horsepower", "fuel", "width","height", "domestic", "year", 
+          "country2","country3", "country4", "country5", .sep = "+")
+
+formula <- glue("ln_dmshare ~", X)
+lm1 <- lm(formula, data = df)
+
+# TODO: Add fixed effects Check what within means, and tewoways
+
+```
+```{r}
+alpha_1 <- logit_fit[["coefficients"]][["price"]]
+df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
+
+# TODO: fix output
+summary_stats(df$own_price_elasticity)
+```
+```{r}
+# TODO: Make it pretty!
+df <- df %>% group_by(firm) %>% mutate(avg_e_jj_l = mean(own_price_elasticity))
+
+df <- fastDummies::dummy_cols(df, select_columns = "firm")
+
+df %>% group_by(firm) %>% summarise(mean = abs(mean(own_price_elasticity))) %>% 
+  ggplot(aes(x = reorder(firm, -mean), y = mean)) +
+  geom_bar(stat="identity")
+```
 
 
 # 5 Nested logit demand
@@ -91,27 +162,128 @@ Estimate demand using a nested logit specification where segment is
 defined as the nest (Berry, 1994). Use different estimators such as OLS
 and fixed effects. Use your estimated coefficients to calculate own-price
 elasticities. Discuss your results.
-```{r}
 
+```{r}
+df <- df %>% mutate(ln_mshare_s = log(mshare_s))
+
+X <- glue("price", "horsepower", "fuel", "width","height", "domestic", "year", 
+          "country2","country3", "country4", "country5", "ln_mshare_s", .sep = "+")
+
+formula <- glue("ln_dmshare ~", X)
+lmnest <- lm(formula, data = df)
+```
+```{r}
+alpha_2 <- lmnest[["coefficients"]][["price"]]
+sigma <- lmnest[["coefficients"]][["ln_mshare_s"]]
+
+df <- df %>% mutate(e_jj_nl = alpha_2 * (1/(1-sigma) - (sigma/(1-sigma)) * mshare_s  - mshare)*price)
+
+# TODO: fix output
+summary_stats(df$e_jj_nl)
+```
+```{r}
+# TODO: add to previous chart
+df <- df %>% group_by(firm) %>% mutate(avg_e_jj_nl = mean(e_jj_nl))
+
+df %>% group_by(firm) %>% summarise(mean = abs(mean(e_jj_nl))) %>% 
+  ggplot(aes(x = reorder(firm, -mean), y = mean)) +
+  geom_bar(stat="identity")
 ```
 
 
 # 6 Instruments
-Suggest two types of instruments that could be used to solve the endogeneity problem of the price variable. Why do you propose these
-instruments?
+Suggest two types of instruments that could be used to solve the endogeneity problem of the price variable. Why do you propose these instruments?
+
+Want to find something that shifts the supply curve:
+Things that change the marginal cost:
+
+* price on car paint
+* Strikes specific to the car industry or where strike wage remains. 
 
 # 7 Nash Bertrand
 Assume Nash-Bertrand competition in prices on the supply side. Calculate the implied marginal costs, markups and Lerner index based on
 the estimates from the nested logit specification in [5]. Present firmlevel averages of price, marginal cost, markup and the Lerner index.
-Do you think your results are economically meaningful? Explain and
-discuss.
+
+Do you think your results are economically meaningful? Explain and discuss.
+
+```{r}
+# markups
+df <- df %>% mutate(pderiv = alpha_2 * mshare*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s-mshare),
+                    markup = mshare/pderiv,
+                    mc = price - markup,
+                    lerner = markup/price)
+# TODO: what is markup2? 
+
+# summarise
+df %>% select(markup, lerner, mc, price) %>% summary_stats()
+
+```
+```{r}
+# firm level 
+df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
+                                 avg_mc = mean(mc),
+                                 avg_lerner = mean(lerner),
+                                 avg_price = mean(price))
+
+# TODO: create a table with summary stats: rows: all, firm1, firm2...
+```
 
 
 # 8 Merger
+Note that Matilda made a mmistake in the lecture, divided by 4 to get a 25% decrease.
+```{r}
+df_merger <- df
+df_merger <- df_merger %>% mutate(firmnew = if_else(firm == 15 & country == 3 & year >= 1998, 26, firm),
+                                  segment_new = if_else(co == 177 & country == 3 & year >= 1998, 4, segment),
+                     qu_new = case_when(
+                       co == 164 & country == 3 & year >= 1998 ~ qu*0.75,
+                       co == 166 & country == 3 & year >= 1998 ~ qu*0.5,
+                       co == 168 & country == 3 & year >= 1998 ~ 0,
+                       TRUE ~ qu
+                       ),
+                     mshare1 = qu_new/msize
+                     )
+df_merger <- df_merger %>% group_by(segment_new, yearcountry) %>% mutate(tot_s1 = sum(qu_new),
+                                                            mshare_s1 = qu_new / tot_s1)
+
+```
+```{r}
+df_merger %>% filter(year == 1998, country == 3) %>%
+  select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
+```
+## Post merger
+```{r}
+# TODO: double check we should be using alpha_2 and not something else
+df_merger <- df_merger %>% mutate(pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s1-mshare1),
+                     markup_new = -mshare1 / pderiv_new,
+                     price_new = mc + markup_new,
+                     lerner_new = markup_new / price_new,
+                     dprice = (price_new-price)/price)
+```
+```{r}
+df_merger %>% filter(year == 1998, country == 3) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
+
+# GM
+df_merger %>% filter(year == 1998, country == 3, firm == 15) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
+
+# VW
+df_merger %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
+```
+Note that dprice does not correspond to (price_new - price) / price.
 
 # 9 Efficient merger
+Redo 8 with a changed mc. Tabulate all 5 segments.
+
+Create a function that takes a data frame and a marginal cost that then returns an updated data frame
 
 # 10 2 more features
+We know what happens to production, but happens to sales?
+What branding effects are there that might affect sales?
+
+More nests?
 
 
 
