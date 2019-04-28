@@ -380,9 +380,9 @@ pre_post_table %>%
   geom_point(aes(x = as.factor("Post merger"), y = efficient_price)) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.85, y = pre_post_table$price, label = as.character(pre_post_table$name)) +
-  labs(title = "Title", y = "Average price") +
+  labs(title = "Price hikes caused by merger", y = "Average price") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
-  scale_colour_manual(guide = "legend", name = "Merger type",
+  scale_colour_manual(guide = "legend", name = "Merger type:",
          values =c("#336666"="#336666","#9ae5de"="#9ae5de"), 
          labels = c("Not cost reducing","Cost reducing"))
 
