@@ -261,7 +261,7 @@ df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
 Note that Matilda made a mmistake in the lecture, divided by 4 to get a 25% decrease.
 
 ```{r merger_function}
-post_merger_df <- function(dataframe, mc){
+post_merger_df <- function(dataframe, ratio_mc){
   # this takes a data frame, creates new variables and returns the same data frame
   dataframe <- dataframe %>% 
     mutate(firmnew = if_else(firm == 15 & country == 3 & year >= 1998, 26, firm), 
@@ -278,11 +278,12 @@ dataframe <- dataframe %>% group_by(segment_new, yearcountry) %>%
          mshare_s1 = qu_new / tot_s1) %>% ungroup()
 
 # TODO: double check we should be using alpha_2 and not something else
-dataframe <- dataframe %>% mutate(pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s1-mshare1),
-                     markup_new = -(mshare1 / pderiv_new)*mc, # is this where the marginal cost is changing?
-                     price_new = mc + markup_new,
-                     lerner_new = markup_new / price_new,
-                     dprice = (price_new-price)/price)
+dataframe <- dataframe %>% mutate(mc = mc * ratio_mc,
+                                  pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s1-mshare1),
+                                  markup_new = -(mshare1 / pderiv_new),
+                                  price_new = mc + markup_new,
+                                  lerner_new = markup_new / price_new,
+                                  dprice = (price_new-price)/price)
 
   return(dataframe)
 }
@@ -311,14 +312,11 @@ gm_table <- merger_df %>% filter(year == 1998, country == 3, firm == 15) %>% dro
 vw_table <- merger_df %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
 
-price_change_table <- rbind(ger_table, gm_table, vw_table) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% as_tibble() %>% select(-dprice) #%>% 
- # gather("price", "value", -name)
+price_change_table <- rbind(ger_table, gm_table, vw_table) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% select(-dprice) 
+
+price_change_table
 ```
-```{r}
-price_change_table %>% gather("price", "value", -name) %>% mutate(time = if_else(price == "price", 0,1)) %>% ggplot(aes(x = time, y = value)) +
-  geom_point() +
-  geom_segment(aes(xend = 2, yend = price_new, color = name))
-```
+
 
 Note that dprice does not correspond to (price_new - price) / price.
 
@@ -327,6 +325,36 @@ Redo 8 with a changed mc. Tabulate all 5 segments.
 
 ```{r}
 merger_df_9 <- post_merger_df(df, 0.8)
+```
+
+```{r}
+merger_df_9 %>% filter(year == 1998, country == 3) %>%
+  select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% summary_table()
+```
+
+```{r}
+# TODO: Add the five segments like the others were added
+ger_table <- merger_df_9 %>% filter(year == 1998, country == 3) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
+
+# GM
+gm_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 15) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
+
+# VW
+vw_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
+
+price_change_table_2 <- rbind(ger_table, gm_table, vw_table) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% select(-dprice)
+
+price_change_table_2 <- price_change_table_2 %>% rename(efficient_price = price_new)
+```
+```{r}
+# Merge the two price change tables
+pre_post_table <- full_join(price_change_table, price_change_table_2)
+
+pre_post_table <- pre_post_table %>% gather(price_type, price, -name) %>% 
+  mutate(treatment = if_else(price_type == "price", 0, 1))
 ```
 
 
@@ -338,35 +366,15 @@ More nests?
 
 
 ```{r}
-price_change_table %>% ggplot(aes(x = 1, y = price)) +
+pre_post_table %>% select(-treatment) %>%  spread(price_type, price) %>%
+  ggplot(aes(x = as.factor(0), y = price, colour = name)) +
   geom_point() +
-  geom_segment(aes(xend = 2, yend = price_new, color = name))
-```
-
-
-# old
-
-```{r}
-df_merger <- df
-df_merger <- df_merger %>% mutate(firmnew = if_else(firm == 15 & country == 3 & year >= 1998, 26, firm),
-                                  segment_new = if_else(co == 177 & country == 3 & year >= 1998, 4, segment),
-                     qu_new = case_when(
-                       co == 164 & country == 3 & year >= 1998 ~ qu*0.75,
-                       co == 166 & country == 3 & year >= 1998 ~ qu*0.5,
-                       co == 168 & country == 3 & year >= 1998 ~ 0,
-                       TRUE ~ qu
-                       ),
-                     mshare1 = qu_new/msize
-                     )
-df_merger <- df_merger %>% group_by(segment_new, yearcountry) %>% mutate(tot_s1 = sum(qu_new),
-                                                            mshare_s1 = qu_new / tot_s1)
+  geom_point(aes(x = as.factor(1),y = price_new)) +
+  geom_point(aes(x = as.factor(1), y = efficient_price) +
+  geom_segment(aes(xend = as.factor(1), yend = price_new)) +
+  geom_segment(aes(xend = as.factor(1), yend = efficient_price))
+h
 
 ```
-```{r}
-# TODO: double check we should be using alpha_2 and not something else
-df_merger <- df_merger %>% mutate(pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s1-mshare1),
-                     markup_new = -mshare1 / pderiv_new,
-                     price_new = mc + markup_new,
-                     lerner_new = markup_new / price_new,
-                     dprice = (price_new-price)/price)
-```
+
+
