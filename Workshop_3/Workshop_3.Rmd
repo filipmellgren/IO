@@ -31,35 +31,47 @@ library(stargazer)
 library(reshape2)
 library(xtable)
 library(plm)
+library(glue)
 ```
 # Step 0
 ```{r}
 df <- import("/Users/filip/Documents/Data_analysis_R/IO/Workshop_3/Cars.dta")
-df <- df %>% mutate(year1 = year, country1 = country) %>% unite(yearcountry, c("year1", "country1"))
+df <- df %>% mutate(yearcountry = paste(year, country))
 ```
 
-```{r}
-df %<>% as_tibble() %>% glimpse()
-```
 # 1 Summary statistics
 Show and discuss summary statistics of the car market in the five EU countries. Focus on what you believe are key variables given the questions at hand.
 
 ```{r}
 # TODO: Add necessary summary stats. Count? Corr?
 summary_stats <- function(x){
-  summary <- rbind(mean(x), sd(x, na.rm = TRUE), min(x, na.rm = TRUE), max(x, na.rm = TRUE)) 
+  x <- as.matrix(x)
+  
+  summary <- rbind(mean(x), sd(x, na.rm = TRUE), min(x, na.rm = TRUE), 
+                   max(x, na.rm = TRUE))
+    return(summary)
+}
+
+# Takes above and turns it into a nice table
+summary_table<- function(summary){
+  summary <- as_tibble(summary) %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4)
   return(summary)
 }
 ```
 
+
 ```{r}
+
 # TODO: Group by country? If so, stack them, keep the same columns
 df %>% 
-  select(year, country, co, segment, domestic, firm, qu, price, horsepower, fuel, width, height, pop) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
+  select(year, country, co, segment, domestic, firm, qu, price, horsepower, fuel, width, height, pop) %>% map(function(x) summary_stats(x)) %>% summary_table()
+
 ```
+
 ```{r}
 # TODO: Add numbers to each cell
-cormatdf <- df %>% select(year, country, domestic, qu, price, horsepower, fuel, width, height, pop)
+
+cormatdf <- df %>% select(price, qu, year, domestic, horsepower, fuel)
 cormat <- round(cor(cormatdf),2)
 
 melted_cormat <- melt(cormat)
@@ -70,9 +82,12 @@ melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) +
        caption = "caption") +
   scale_fill_gradient2(low = "#336666", high = "#664033", mid = "white", 
    midpoint = 0, limit = c(-1,1), space = "Lab", 
-    name="Pearson\nCorrelation")
+    name="Pearson\nCorrelation") +
+  geom_text(aes(Var1, Var2, label = value), color = "black", size = 4)
 ```
-Excluded co (model code), segment (ordinal variable), firm
+Excluded co (model code), segment (ordinal variable), firm, country, because they are nonsensical
+Also height and width were excluded, because they were not deemed as important
+Pop was excluded because it is not a feature related to the cars
 
 # 2 Hedonic price regression
 Add segment dummies?
@@ -107,12 +122,15 @@ of households, approximated by total population divided by 4
 
 df <- df %>% mutate(msize = pop/4, 
               mshare = qu/msize)
-df <- df %>% group_by(segment, yearcountry) %>% mutate(tot_s = sum(qu))
+df <- df %>% group_by(segment, yearcountry) %>% mutate(tot_s = sum(qu)) %>% ungroup()
 df <- df %>% mutate(mshare_s = qu / tot_s)
 
-#df %>% 
-#  select(msize, mshare) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% round(5) %>% #as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
+
+df %>% mutate(mshare = mshare *100) %>% select(msize, mshare) %>% map(function(x) summary_stats(x)) %>% summary_table()
+
+
 ```
+
 
 
 # 4 Logit demand
@@ -123,7 +141,7 @@ Are there any interesting differences across firms?
 ```{r}
 
 df <- df %>% group_by(yearcountry) %>% mutate(tot_qu = sum(qu),
-                                        oshare = 1 - tot_qu/msize)
+                                        oshare = 1 - tot_qu/msize) %>% ungroup()
 
 df <- df %>% mutate(ln_dmshare = log(mshare) - log(oshare))
 ```
@@ -139,21 +157,19 @@ lm1 <- lm(formula, data = df)
 
 ```
 ```{r}
-alpha_1 <- logit_fit[["coefficients"]][["price"]]
+alpha_1 <- lm1[["coefficients"]][["price"]]
 df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
 
-# TODO: fix output
-summary_stats(df$own_price_elasticity)
+# TODO: fix output. What are we supposed to show?
+summary_stats(df$own_price_elasticity) %>% summary_table()
 ```
 ```{r}
-# TODO: Make it pretty!
-df <- df %>% group_by(firm) %>% mutate(avg_e_jj_l = mean(own_price_elasticity))
+
+df <- df %>% group_by(firm) %>% mutate(avg_e_jj_l = mean(own_price_elasticity)) %>% ungroup()
 
 df <- fastDummies::dummy_cols(df, select_columns = "firm")
 
-df %>% group_by(firm) %>% summarise(mean = abs(mean(own_price_elasticity))) %>% 
-  ggplot(aes(x = reorder(firm, -mean), y = mean)) +
-  geom_bar(stat="identity")
+
 ```
 
 
@@ -172,6 +188,7 @@ X <- glue("price", "horsepower", "fuel", "width","height", "domestic", "year",
 formula <- glue("ln_dmshare ~", X)
 lmnest <- lm(formula, data = df)
 ```
+
 ```{r}
 alpha_2 <- lmnest[["coefficients"]][["price"]]
 sigma <- lmnest[["coefficients"]][["ln_mshare_s"]]
@@ -179,12 +196,24 @@ sigma <- lmnest[["coefficients"]][["ln_mshare_s"]]
 df <- df %>% mutate(e_jj_nl = alpha_2 * (1/(1-sigma) - (sigma/(1-sigma)) * mshare_s  - mshare)*price)
 
 # TODO: fix output
-summary_stats(df$e_jj_nl)
+df %>% select(e_jj_nl) %>% summary_stats() %>% summary_table()
 ```
-```{r}
-# TODO: add to previous chart
-df <- df %>% group_by(firm) %>% mutate(avg_e_jj_nl = mean(e_jj_nl))
 
+```{r}
+df <- df %>% group_by(firm) %>% mutate(avg_e_jj_nl = mean(e_jj_nl)) %>% ungroup()
+```
+
+
+```{r}
+
+# TODO: Make it pretty!
+df %>% group_by(firm) %>% summarise(mean = abs(mean(own_price_elasticity))) %>% 
+  ggplot(aes(x = reorder(firm, -mean), y = mean)) +
+  geom_bar(stat="identity") +
+  theme_economist() + scale_fill_economist() + scale_color_economist() +
+  labs(title = "Elasticities")
+
+# TODO: add to previous chart. Update, not sure it's a good idea, they are very different
 df %>% group_by(firm) %>% summarise(mean = abs(mean(e_jj_nl))) %>% 
   ggplot(aes(x = reorder(firm, -mean), y = mean)) +
   geom_bar(stat="identity")
@@ -215,7 +244,6 @@ df <- df %>% mutate(pderiv = alpha_2 * mshare*((1/(1-sigma))-(sigma/(1-sigma))*m
 # TODO: what is markup2? 
 
 # summarise
-df %>% select(markup, lerner, mc, price) %>% summary_stats()
 
 ```
 ```{r}
@@ -223,7 +251,7 @@ df %>% select(markup, lerner, mc, price) %>% summary_stats()
 df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
                                  avg_mc = mean(mc),
                                  avg_lerner = mean(lerner),
-                                 avg_price = mean(price))
+                                 avg_price = mean(price)) %>% ungroup()
 
 # TODO: create a table with summary stats: rows: all, firm1, firm2...
 ```
@@ -231,6 +259,93 @@ df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
 
 # 8 Merger
 Note that Matilda made a mmistake in the lecture, divided by 4 to get a 25% decrease.
+
+```{r merger_function}
+post_merger_df <- function(dataframe, mc){
+  # this takes a data frame, creates new variables and returns the same data frame
+  dataframe <- dataframe %>% 
+    mutate(firmnew = if_else(firm == 15 & country == 3 & year >= 1998, 26, firm), 
+           segment_new = if_else(co == 177 & country == 3 & year >= 1998, 4, segment), 
+           qu_new = case_when( 
+             co == 164 & country == 3 & year >= 1998 ~ qu*0.75, 
+             co == 166 & country == 3 & year >= 1998 ~ qu*0.5, 
+             co == 168 & country == 3 & year >= 1998 ~ 0, 
+             TRUE ~ qu), 
+           mshare1 = qu_new/msize)
+  
+dataframe <- dataframe %>% group_by(segment_new, yearcountry) %>% 
+  mutate(tot_s1 = sum(qu_new), 
+         mshare_s1 = qu_new / tot_s1) %>% ungroup()
+
+# TODO: double check we should be using alpha_2 and not something else
+dataframe <- dataframe %>% mutate(pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s1-mshare1),
+                     markup_new = -(mshare1 / pderiv_new)*mc, # is this where the marginal cost is changing?
+                     price_new = mc + markup_new,
+                     lerner_new = markup_new / price_new,
+                     dprice = (price_new-price)/price)
+
+  return(dataframe)
+}
+```
+
+```{r}
+merger_df <- post_merger_df(df, 1)
+```
+
+
+```{r}
+merger_df %>% filter(year == 1998, country == 3) %>%
+  select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% summary_table()
+```
+## Post merger
+
+```{r}
+ger_table <- merger_df %>% filter(year == 1998, country == 3) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
+
+# GM
+gm_table <- merger_df %>% filter(year == 1998, country == 3, firm == 15) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
+
+# VW
+vw_table <- merger_df %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
+
+price_change_table <- rbind(ger_table, gm_table, vw_table) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% as_tibble() %>% select(-dprice) #%>% 
+ # gather("price", "value", -name)
+```
+```{r}
+price_change_table %>% gather("price", "value", -name) %>% mutate(time = if_else(price == "price", 0,1)) %>% ggplot(aes(x = time, y = value)) +
+  geom_point() +
+  geom_segment(aes(xend = 2, yend = price_new, color = name))
+```
+
+Note that dprice does not correspond to (price_new - price) / price.
+
+# 9 Efficient merger
+Redo 8 with a changed mc. Tabulate all 5 segments.
+
+```{r}
+merger_df_9 <- post_merger_df(df, 0.8)
+```
+
+
+# 10 2 more features
+We know what happens to production, but happens to sales?
+What branding effects are there that might affect sales?
+
+More nests?
+
+
+```{r}
+price_change_table %>% ggplot(aes(x = 1, y = price)) +
+  geom_point() +
+  geom_segment(aes(xend = 2, yend = price_new, color = name))
+```
+
+
+# old
+
 ```{r}
 df_merger <- df
 df_merger <- df_merger %>% mutate(firmnew = if_else(firm == 15 & country == 3 & year >= 1998, 26, firm),
@@ -248,11 +363,6 @@ df_merger <- df_merger %>% group_by(segment_new, yearcountry) %>% mutate(tot_s1 
 
 ```
 ```{r}
-df_merger %>% filter(year == 1998, country == 3) %>%
-  select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
-```
-## Post merger
-```{r}
 # TODO: double check we should be using alpha_2 and not something else
 df_merger <- df_merger %>% mutate(pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s1-mshare1),
                      markup_new = -mshare1 / pderiv_new,
@@ -260,30 +370,3 @@ df_merger <- df_merger %>% mutate(pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-
                      lerner_new = markup_new / price_new,
                      dprice = (price_new-price)/price)
 ```
-```{r}
-df_merger %>% filter(year == 1998, country == 3) %>% drop_na() %>% 
-  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
-
-# GM
-df_merger %>% filter(year == 1998, country == 3, firm == 15) %>% drop_na() %>% 
-  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
-
-# VW
-df_merger %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
-  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% as_tibble() %>% t() %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.e." = V2, "Min." = V3, "Max." = V4 )
-```
-Note that dprice does not correspond to (price_new - price) / price.
-
-# 9 Efficient merger
-Redo 8 with a changed mc. Tabulate all 5 segments.
-
-Create a function that takes a data frame and a marginal cost that then returns an updated data frame
-
-# 10 2 more features
-We know what happens to production, but happens to sales?
-What branding effects are there that might affect sales?
-
-More nests?
-
-
-
