@@ -349,6 +349,7 @@ price_change_table_2 <- rbind(ger_table, gm_table, vw_table) %>% select(Variable
 
 price_change_table_2 <- price_change_table_2 %>% rename(efficient_price = price_new)
 ```
+
 ```{r}
 # Merge the two price change tables
 pre_post_table <- full_join(price_change_table, price_change_table_2)
@@ -367,13 +368,15 @@ More nests?
 
 ```{r}
 pre_post_table %>% select(-treatment) %>%  spread(price_type, price) %>%
-  ggplot(aes(x = as.factor(0), y = price, colour = name)) +
-  geom_point() +
-  geom_point(aes(x = as.factor(1),y = price_new)) +
-  geom_point(aes(x = as.factor(1), y = efficient_price) +
-  geom_segment(aes(xend = as.factor(1), yend = price_new)) +
-  geom_segment(aes(xend = as.factor(1), yend = efficient_price))
-h
+  ggplot(aes(x = as.factor(0), y = price)) +
+  geom_point(size = 3) +
+  geom_point(aes(x = as.factor(1),y = price_new), size = 3) +
+  geom_point(aes(x = as.factor(1), y = efficient_price), shape = 4, size = 3) +
+  geom_segment(aes(xend = as.factor(1), yend = price_new),color = "red") +
+  geom_segment(aes(xend = as.factor(1), yend = efficient_price), color = "blue") +
+  theme_economist() + scale_fill_economist() + scale_color_economist()
+  
+
 
 ```
 
