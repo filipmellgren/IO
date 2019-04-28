@@ -367,18 +367,25 @@ More nests?
 
 
 ```{r}
-pre_post_table <- pre_post_table %>% select(-treatment) %>%  spread(price_type, price) 
+pre_post_table <- pre_post_table %>% select(-treatment) %>%  
+  spread(price_type, price) 
 ```
 ```{r}
 pre_post_table %>%
-  ggplot(aes(x = as.factor(0), y = price)) +
+  ggplot(aes(x = as.factor("Pre merger"), y = price)) +
+  geom_segment(aes(xend = as.factor("Post merger"), yend = price_new,color = "#336666")) +
+  geom_segment(aes(xend = as.factor("Post merger"), yend = efficient_price, color = "#9ae5de")) +
   geom_point() +
-  geom_point(aes(x = as.factor(1),y = price_new)) +
-  geom_point(aes(x = as.factor(1), y = efficient_price)) +
-  geom_segment(aes(xend = as.factor(1), yend = price_new),color = "#e3120b") +
-  geom_segment(aes(xend = as.factor(1), yend = efficient_price), color = "#244747") +
+  geom_point(aes(x = as.factor("Post merger"),y = price_new)) +
+  geom_point(aes(x = as.factor("Post merger"), y = efficient_price)) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
-  annotate("text", x = 0.85, y = pre_post_table$price, label = as.character(pre_post_table$name))
+  annotate("text", x = 0.85, y = pre_post_table$price, label = as.character(pre_post_table$name)) +
+  labs(title = "Title", y = "Average price") +
+  scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
+  scale_colour_manual(guide = "legend", name = "Merger type",
+         values =c("#336666"="#336666","#9ae5de"="#9ae5de"), 
+         labels = c("Not cost reducing","Cost reducing"))
+
   
 ```
 
