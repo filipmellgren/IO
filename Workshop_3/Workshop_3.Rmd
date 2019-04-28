@@ -367,17 +367,20 @@ More nests?
 
 
 ```{r}
-pre_post_table %>% select(-treatment) %>%  spread(price_type, price) %>%
-  ggplot(aes(x = as.factor(0), y = price)) +
-  geom_point(size = 3) +
-  geom_point(aes(x = as.factor(1),y = price_new), size = 3) +
-  geom_point(aes(x = as.factor(1), y = efficient_price), shape = 4, size = 3) +
-  geom_segment(aes(xend = as.factor(1), yend = price_new),color = "red") +
-  geom_segment(aes(xend = as.factor(1), yend = efficient_price), color = "blue") +
-  theme_economist() + scale_fill_economist() + scale_color_economist()
-  
-
-
+pre_post_table <- pre_post_table %>% select(-treatment) %>%  spread(price_type, price) 
 ```
+```{r}
+pre_post_table %>%
+  ggplot(aes(x = as.factor(0), y = price)) +
+  geom_point() +
+  geom_point(aes(x = as.factor(1),y = price_new)) +
+  geom_point(aes(x = as.factor(1), y = efficient_price)) +
+  geom_segment(aes(xend = as.factor(1), yend = price_new),color = "#e3120b") +
+  geom_segment(aes(xend = as.factor(1), yend = efficient_price), color = "#244747") +
+  theme_economist() + scale_fill_economist() + scale_color_economist() +
+  annotate("text", x = 0.85, y = pre_post_table$price, label = as.character(pre_post_table$name))
+  
+```
+
 
 
