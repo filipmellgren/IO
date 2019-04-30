@@ -35,15 +35,18 @@ library(glue)
 ```
 # Step 0
 ```{r}
-df <- import("/Users/filip/Documents/Data_analysis_R/IO/Workshop_3/Cars.dta")
-df <- df %>% mutate(yearcountry = paste(year, country))
+df <- import("Cars.dta")
+df <- df %>% mutate(yearcountry = paste(year, country)) %>% as_tibble()
 ```
 
 # 1 Summary statistics
 Show and discuss summary statistics of the car market in the five EU countries. Focus on what you believe are key variables given the questions at hand.
 
 ```{r}
-# TODO: Add necessary summary stats. Count? Corr?
+# Create two functions that are used throughout the analysis to create 
+# descriptive tables
+
+# TODO: Add necessary summary stats. Do we need percentiles?
 summary_stats <- function(x){
   x <- as.matrix(x)
   
@@ -61,7 +64,7 @@ summary_table<- function(summary){
 
 
 ```{r}
-
+# Summary statistics to Q1.
 # TODO: Group by country? If so, stack them, keep the same columns
 df %>% 
   select(year, country, co, segment, domestic, firm, qu, price, horsepower, fuel, width, height, pop) %>% map(function(x) summary_stats(x)) %>% summary_table()
@@ -69,8 +72,8 @@ df %>%
 ```
 
 ```{r}
-# TODO: Add numbers to each cell
-
+# Correlation matrix to Q1.
+# Strictly necessary?
 cormatdf <- df %>% select(price, qu, year, domestic, horsepower, fuel)
 cormat <- round(cor(cormatdf),2)
 
@@ -90,7 +93,6 @@ Also height and width were excluded, because they were not deemed as important
 Pop was excluded because it is not a feature related to the cars
 
 # 2 Hedonic price regression
-Add segment dummies?
 
 ```{r}
 # TODO: add the correct variables to X
@@ -102,7 +104,7 @@ lm(formula, data = df)
 
 ```
 ```{r}
-# TODO: define countryyear variable? 
+# Fixed effects regression - hedonic enough?
 # TODO: include at all?
 #plm(formula, data = df, index = c('region', 'year'), model = 'within',
  #   effect = 'twoways')
