@@ -231,6 +231,13 @@ Things that change the marginal cost:
 * price on car paint
 * Strikes specific to the car industry or where strike wage remains. 
 
+To solve the endogeneity problem of the price variable, we need instruments that shifts the supply in market, without affecting the demand.
+
+As a first instrument, we suggest price on car paint. This clearly affects the price through the supply side, by increasing the marginal costs of the supplier. The price on car paint hence should be relevant (note that this is testable, given data on price of car paint). It is unlikely that the price on car paint affects the market price through any channel on the demand (or any other channel for that matter) and hence it is likely that the instrument would also be valid. 
+
+Furthermore, we suggest to use data on strikes specific to the car industry. This should increase the production costs and hence shift supply, making the instrument relevant (not again that this is testable, given access to data). The validity of the instrument relies on the assumption that the strike does not affect the strikers demand for cars in such a way that total market demand is affected. We deem the validity as likely: the total population share working in the car industry is usually rather low on a national level. Also, strike funds are often utilized during strikes to compensate strikers for the absent wages. 
+
+
 # 7 Nash Bertrand
 Assume Nash-Bertrand competition in prices on the supply side. Calculate the implied marginal costs, markups and Lerner index based on
 the estimates from the nested logit specification in [5]. Present firmlevel averages of price, marginal cost, markup and the Lerner index.
