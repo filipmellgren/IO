@@ -66,9 +66,26 @@ summary_table<- function(summary){
 ```{r}
 # Summary statistics to Q1.
 # TODO: Group by country? If so, stack them, keep the same columns
-df %>% 
-  select(year, country, co, segment, domestic, firm, qu, price, horsepower, fuel, width, height, pop) %>% map(function(x) summary_stats(x)) %>% summary_table()
+descriptive_table <- df %>%
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop, ngdp) %>% 
+  map(function(x) summary_stats(x)) %>% summary_table() %>% mutate(country = "All")
 
+for (c in 1:5) {
+ descriptive_table <-  rbind(descriptive_table, df %>% filter(country == c) %>% 
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop, ngdp) %>% 
+  map(function(x) summary_stats(x)) %>% summary_table() %>% mutate(country = c))
+}
+
+library(zoo)
+
+tmp_table <- descriptive_table %>% arrange(Variable) %>% 
+  mutate("Mean_sd" = paste(Mean, S.e.)) %>% 
+  select(Variable, Mean_sd, Min., Max., country) %>%
+  spread(key = country, value = Mean_sd) %>% na.locf() %>% 
+  distinct(Variable, .keep_all = TRUE)
+
+rbind(tmp_table, tmp_table) %>% arrange(Variable) %>% 
+  filter(Variable != "country") %>% select(Variable, All, 1, 2, 3, 4, 5, Min., Max.)
 ```
 
 ```{r}
