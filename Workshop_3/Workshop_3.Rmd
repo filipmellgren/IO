@@ -39,6 +39,7 @@ df <- df %>% mutate(yearcountry = paste(year, country)) %>% as_tibble()
 # 1 Summary statistics
 Show and discuss summary statistics of the car market in the five EU countries. Focus on what you believe are key variables given the questions at hand.
 
+Could be the case: "Note that the panel is unbalanced because most models are not available throughout the entire period or in all countries."
 ```{r}
 # Create two functions that are used throughout the analysis to create 
 # descriptive tables
