@@ -391,6 +391,13 @@ What branding effects are there that might affect sales?
 
 More nests?
 
+The analysis conducted above focuses on the company level and production aspect of the merger. However, other important aspects of the businesses involved are likely to be affected as well. 
+
+One aspect is sales and marketing. The car market is likely to be characterized by consumer loyalties, that perhaps is not captured in the product characteristics analysis made, above that could be affected by a merger: It is not curtain (as the above conducted analysis assumes) that the demand for a particular brand stays the same. E.g., some customers might value the “Americaness” and the American values that GM symbolizes. Such customers might be less willing to buy their models after a merger, where the GM production has been taken over by German Volkswagen. To the contrary, it could also create interesting co-branding opportunities. Such aspects of sales and marketing should hence also be considered in merger analysis. This could for example be done by incorporating these aspects into the model above, by scoring of these aspects of the products and estimation of how they would change with the merger through consumer surveys. 
+
+Another aspect to be considered is the number of nests. We believe that a model using a richer variety of nests would more accurately capture the market behavior. [Filip: I don’t remember what we said here?]
+
+
 
 ```{r}
 pre_post_table <- pre_post_table %>% select(-treatment) %>%  
