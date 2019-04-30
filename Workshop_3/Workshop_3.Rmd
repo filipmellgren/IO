@@ -177,20 +177,24 @@ df <- df %>% mutate(ln_dmshare = log(mshare) - log(oshare))
 ```
 
 ```{r}
-# X and X_fe were defined above
+# Adds price to the X
+X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", "year", .sep = "+")
+X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
 
 formula <- glue("ln_dmshare ~", X)
 fe_formula <- glue("ln_dmshare ~", X_fe)
 lm.logit <- lm(formula, data = df)
 fe.logit <- lm(fe_formula, data = df)
 
+# TODO: do we present this or is it enough with the elasticities?
+stargazer(lm.logit, fe.logit, type = "text")
 ```
 
 ```{r}
-alpha_1 <- lm1[["coefficients"]][["price"]]
+# TODO: what coefficient do we use to estimate the elasticities? Maybe both
+alpha_1 <- lm.logit[["coefficients"]][["price"]]
 df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
 
-# TODO: fix output. What are we supposed to show? This and estimates form f.e.
 summary_stats(df$own_price_elasticity) %>% summary_table()
 ```
 
@@ -214,20 +218,26 @@ elasticities. Discuss your results.
 # TODO: add fixed effects.
 df <- df %>% mutate(ln_mshare_s = log(mshare_s))
 
-X <- glue("price", "horsepower", "fuel", "width","height", "domestic", "year", 
-          "country2","country3", "country4", "country5", "ln_mshare_s", .sep = "+")
+
+# Adds ln_mshare_s to the X
+X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", 
+          "year", "ln_mshare_s", .sep = "+")
+X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
 
 formula <- glue("ln_dmshare ~", X)
-lmnest <- lm(formula, data = df)
+lm.nest <- lm(formula, data = df)
+fe_formula <- glue("ln_dmshare ~", X_fe)
+fe.nest <- lm(fe_formula, data = df)
 ```
 
 ```{r}
-alpha_2 <- lmnest[["coefficients"]][["price"]]
-sigma <- lmnest[["coefficients"]][["ln_mshare_s"]]
+# TODO: again, do what elasticfity do we calculate?
+alpha_2 <- lm.nest[["coefficients"]][["price"]]
+sigma <- lm.nest[["coefficients"]][["ln_mshare_s"]]
 
 df <- df %>% mutate(e_jj_nl = alpha_2 * (1/(1-sigma) - (sigma/(1-sigma)) * mshare_s  - mshare)*price)
 
-# TODO: fix output
+# TODO: fix output. Maybe add to the other one?
 df %>% select(e_jj_nl) %>% summary_stats() %>% summary_table()
 ```
 
