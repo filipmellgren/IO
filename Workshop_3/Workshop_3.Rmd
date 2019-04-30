@@ -142,6 +142,8 @@ Pop was excluded because it is not a feature related to the cars
 
 ```{r}
 # TODO: add the correct variables to X
+# TODO: Squeeze the latex table
+
 X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", .sep = "+")
 
 formula <- glue("log(price) ~", X)
@@ -179,13 +181,14 @@ df <- df %>% group_by(segment, yearcountry) %>% mutate(tot_s = sum(qu)) %>%
 df <- df %>% mutate(mshare_s = qu / tot_s,
                     ln_mshare_s = log(mshare_s))
 
-
+# Table 1
 df %>% mutate(mshare = mshare *100,
               mshare = mshare_s *100) %>% 
   select(mshare, mshare_s, ln_mshare, ln_mshare_s) %>% 
   map(function(x) summary_stats(x)) %>% summary_table()
 
 # market shares by firm over year, car models and countries
+# Likely not necessary
 df %>% group_by(firm) %>% summarise(mean = mean(mshare)*100, se = sd(mshare),
                                     min = min(mshare), max = max(mshare))
 
@@ -244,7 +247,6 @@ and fixed effects. Use your estimated coefficients to calculate own-price
 elasticities. Discuss your results.
 
 ```{r}
-# TODO: add fixed effects.
 df <- df %>% mutate(ln_mshare_s = log(mshare_s))
 
 
@@ -266,11 +268,13 @@ sigma <- lm.nest[["coefficients"]][["ln_mshare_s"]]
 
 df <- df %>% mutate(e_jj_nl = alpha_2 * (1/(1-sigma) - (sigma/(1-sigma)) * mshare_s  - mshare)*price)
 
-# TODO: fix output. Maybe add to the other one?
-df %>% select(e_jj_nl) %>% summary_stats() %>% summary_table()
+# TODO: fix output
+df %>% select(e_jj_nl,own_price_elasticity) %>%
+  map(function(x) summary_stats(x)) %>% summary_table()
 ```
 
 ```{r}
+# Calculates average average elasticity within nest for each firm
 df <- df %>% group_by(firm) %>% mutate(avg_e_jj_nl = mean(e_jj_nl)) %>% ungroup()
 ```
 
@@ -313,9 +317,10 @@ the estimates from the nested logit specification in [5]. Present firmlevel aver
 Do you think your results are economically meaningful? Explain and discuss.
 
 ```{r}
+# TODO: Note that markups are negative
 # markups
 df <- df %>% mutate(pderiv = alpha_2 * mshare*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s-mshare),
-                    markup = mshare/pderiv,
+                    markup = -mshare/pderiv, # "-" to get the right sign
                     mc = price - markup,
                     lerner = markup/price)
 # TODO: what is markup2? 
@@ -324,18 +329,21 @@ df <- df %>% mutate(pderiv = alpha_2 * mshare*((1/(1-sigma))-(sigma/(1-sigma))*m
 
 ```
 ```{r}
-# firm level 
+# firm level averages
 df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
                                  avg_mc = mean(mc),
                                  avg_lerner = mean(lerner),
                                  avg_price = mean(price)) %>% ungroup()
 
-# TODO: create a table with summary stats: rows: all, firm1, firm2...
+# Table for question 7
+df %>% select(firm, avg_price, avg_mc, avg_markup, avg_lerner) %>% 
+  distinct(firm, .keep_all = TRUE) %>% arrange(-avg_price)
+
 ```
 
 
 # 8 Merger
-Note that Matilda made a mmistake in the lecture, divided by 4 to get a 25% decrease.
+Note that Matilda made a mmistake in the lecture, she divided by 4 to get a 25% decrease.
 
 ```{r merger_function}
 post_merger_df <- function(dataframe, ratio_mc){
@@ -455,22 +463,29 @@ pre_post_table <- pre_post_table %>% select(-treatment) %>%
   spread(price_type, price) 
 ```
 ```{r}
+# TODO: make a similar one for segments
 pre_post_table %>%
   ggplot(aes(x = as.factor("Pre merger"), y = price)) +
   geom_segment(aes(xend = as.factor("Post merger"), yend = price_new,color = "#336666")) +
   geom_segment(aes(xend = as.factor("Post merger"), yend = efficient_price, color = "#9ae5de")) +
-  geom_point() +
-  geom_point(aes(x = as.factor("Post merger"),y = price_new)) +
-  geom_point(aes(x = as.factor("Post merger"), y = efficient_price)) +
+  geom_point(size = 3) +
+  geom_point(aes(x = as.factor("Post merger"),y = price_new), size = 3) +
+  geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.85, y = pre_post_table$price, label = as.character(pre_post_table$name)) +
-  labs(title = "Price hikes caused by merger", y = "Average price") +
+  labs(title = "What are the effects of merger on prices?", y = "Average price",
+       tag = "Graph X") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
          values =c("#336666"="#336666","#9ae5de"="#9ae5de"), 
-         labels = c("Not cost reducing","Cost reducing"))
+         labels = c("Not cost reducing","Cost reducing")) +
+  theme(plot.tag.position = "bottom") +
+  scale_y_continuous(limits=c(10, 20))
 
   
+```
+```{r}
+ggsave("merger_causal_effect.png", height = 20, width = 12, units = "cm")
 ```
 
 
