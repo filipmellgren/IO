@@ -85,7 +85,7 @@ tmp_table <- descriptive_table %>% arrange(Variable) %>%
   distinct(Variable, .keep_all = TRUE)
 
 rbind(tmp_table, tmp_table) %>% arrange(Variable) %>% 
-  filter(Variable != "country") %>% select(Variable, All, 1, 2, 3, 4, 5, Min., Max.)
+  filter(Variable != "country") %>% select(Variable, All, "1", "2", "3", "4", "5", Min., Max.)
 ```
 
 ```{r}
