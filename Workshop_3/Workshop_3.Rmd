@@ -113,18 +113,20 @@ Pop was excluded because it is not a feature related to the cars
 
 ```{r}
 # TODO: add the correct variables to X
-X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", 
-          "country2","country3", "country4", "country5", .sep = "+")
+X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", .sep = "+")
 
 formula <- glue("log(price) ~", X)
-lm(formula, data = df)
+lm.fit <- lm(formula, data = df)
 
 ```
 ```{r}
-# Fixed effects regression - hedonic enough?
 # TODO: include, fix a table with this one as a column next to lm.
-#plm(formula, data = df, index = c('region', 'year'), model = 'within',
- #   effect = 'twoways')
+# TODO: Country or year fixed effects?
+X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
+fe_formula <- glue("log(price) ~", X_fe)
+fe.fit <- lm(fe_formula, data = df)
+
+stargazer(lm.fit, fe.fit, type = "text")
 ```
 
 
@@ -136,21 +138,23 @@ Discuss your findings. Assume that the total market size is the number
 of households, approximated by total population divided by 4
 
 ```{r}
-# TODO: Add a market share and market size for each segment. Do it as percentages
-# TODO: Check in papers (Goldberg, verboven, https://www.jstor.org/stable/pdf/3087434.pdf) what descriptives do they present?
 # TODO: maybe take the five highest and five lowest per a and b. Most popular cars and least popular car
-# TODO: present log of the variables
 
 #a
 df <- df %>% mutate(msize = pop/4, 
-              mshare = qu/msize)
+              mshare = qu/msize,
+              ln_mshare = log(mshare))
 # b
 df <- df %>% group_by(segment, yearcountry) %>% mutate(tot_s = sum(qu)) %>%
   ungroup()
-df <- df %>% mutate(mshare_s = qu / tot_s)
+df <- df %>% mutate(mshare_s = qu / tot_s,
+                    ln_mshare_s = log(mshare_s))
 
 
-df %>% mutate(mshare = mshare *100) %>% select(mshare) %>% map(function(x) summary_stats(x)) %>% summary_table()
+df %>% mutate(mshare = mshare *100,
+              mshare = mshare_s *100) %>% 
+  select(mshare, mshare_s, ln_mshare, ln_mshare_s) %>% 
+  map(function(x) summary_stats(x)) %>% summary_table()
 
 # market shares by firm over year, car models and countries
 df %>% group_by(firm) %>% summarise(mean = mean(mshare)*100, se = sd(mshare),
@@ -166,7 +170,6 @@ Estimate demand using a logit specification (Berry, 1994). Use different estimat
 coefficients to calculate own-price elasticities. Interpret your results.
 Are there any interesting differences across firms?
 ```{r}
-
 df <- df %>% group_by(yearcountry) %>% mutate(tot_qu = sum(qu),
                                         oshare = 1 - tot_qu/msize) %>% ungroup()
 
@@ -174,13 +177,12 @@ df <- df %>% mutate(ln_dmshare = log(mshare) - log(oshare))
 ```
 
 ```{r}
-X <- glue("price", "horsepower", "fuel", "width","height", "domestic", "year", 
-          "country2","country3", "country4", "country5", .sep = "+")
+# X and X_fe were defined above
 
 formula <- glue("ln_dmshare ~", X)
-lm1 <- lm(formula, data = df)
-
-# TODO: Add fixed effects Check what within means, and tewoways. Means we'll get twice as many elasticities.
+fe_formula <- glue("ln_dmshare ~", X_fe)
+lm.logit <- lm(formula, data = df)
+fe.logit <- lm(fe_formula, data = df)
 
 ```
 
@@ -243,7 +245,6 @@ df %>% group_by(firm) %>% summarise(mean = abs(mean(own_price_elasticity))) %>%
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   labs(title = "Elasticities")
 
-# TODO: add to previous chart. Update, not sure it's a good idea, they are very different
 df %>% group_by(firm) %>% summarise(mean = abs(mean(e_jj_nl))) %>% 
   ggplot(aes(x = reorder(firm, -mean), y = mean)) +
   geom_bar(stat="identity")
