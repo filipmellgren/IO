@@ -79,19 +79,19 @@ for (c in 1:5) {
 library(zoo)
 
 tmp_table <- descriptive_table %>% arrange(Variable) %>% 
-  mutate("Mean_sd" = paste(Mean, S.e.)) %>% 
-  select(Variable, Mean_sd, Min., Max., country) %>%
-  spread(key = country, value = Mean_sd) %>% na.locf() %>% 
-  distinct(Variable, .keep_all = TRUE)
+  mutate("se" = paste(S.e., ")", sep = ""),
+    "Mean_se" = paste(Mean, se, sep = " (")) %>% 
+  select(Variable, Mean_se, country) %>% # Add min and max later for simplicity
+  spread(key = country, value = Mean_se)
 
 rbind(tmp_table, tmp_table) %>% arrange(Variable) %>% 
-  filter(Variable != "country") %>% select(Variable, All, "1", "2", "3", "4", "5", Min., Max.)
+  filter(Variable != "country") %>% select(Variable, All, "1", "2", "3", "4", "5")
 ```
 
 ```{r}
 # Correlation matrix to Q1.
 # Strictly necessary?
-cormatdf <- df %>% select(price, qu, year, domestic, horsepower, fuel)
+cormatdf <- df %>% select(price, qu, year, domestic, horsepower, fuel, princ, weight)
 cormat <- round(cor(cormatdf),2)
 
 melted_cormat <- melt(cormat)
@@ -122,7 +122,7 @@ lm(formula, data = df)
 ```
 ```{r}
 # Fixed effects regression - hedonic enough?
-# TODO: include at all?
+# TODO: include, fix a table with this one as a column next to lm.
 #plm(formula, data = df, index = c('region', 'year'), model = 'within',
  #   effect = 'twoways')
 ```
@@ -136,17 +136,25 @@ Discuss your findings. Assume that the total market size is the number
 of households, approximated by total population divided by 4
 
 ```{r}
-# TODO: create segment size
-# TODO: present m.share as percentages
+# TODO: Add a market share and market size for each segment. Do it as percentages
+# TODO: Check in papers (Goldberg, verboven, https://www.jstor.org/stable/pdf/3087434.pdf) what descriptives do they present?
+# TODO: maybe take the five highest and five lowest per a and b. Most popular cars and least popular car
+# TODO: present log of the variables
 
+#a
 df <- df %>% mutate(msize = pop/4, 
               mshare = qu/msize)
-df <- df %>% group_by(segment, yearcountry) %>% mutate(tot_s = sum(qu)) %>% ungroup()
+# b
+df <- df %>% group_by(segment, yearcountry) %>% mutate(tot_s = sum(qu)) %>%
+  ungroup()
 df <- df %>% mutate(mshare_s = qu / tot_s)
 
 
-df %>% mutate(mshare = mshare *100) %>% select(msize, mshare) %>% map(function(x) summary_stats(x)) %>% summary_table()
+df %>% mutate(mshare = mshare *100) %>% select(mshare) %>% map(function(x) summary_stats(x)) %>% summary_table()
 
+# market shares by firm over year, car models and countries
+df %>% group_by(firm) %>% summarise(mean = mean(mshare)*100, se = sd(mshare),
+                                    min = min(mshare), max = max(mshare))
 
 ```
 
@@ -172,18 +180,20 @@ X <- glue("price", "horsepower", "fuel", "width","height", "domestic", "year",
 formula <- glue("ln_dmshare ~", X)
 lm1 <- lm(formula, data = df)
 
-# TODO: Add fixed effects Check what within means, and tewoways
+# TODO: Add fixed effects Check what within means, and tewoways. Means we'll get twice as many elasticities.
 
 ```
+
 ```{r}
 alpha_1 <- lm1[["coefficients"]][["price"]]
 df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
 
-# TODO: fix output. What are we supposed to show?
+# TODO: fix output. What are we supposed to show? This and estimates form f.e.
 summary_stats(df$own_price_elasticity) %>% summary_table()
 ```
-```{r}
 
+```{r}
+# What's this good for?
 df <- df %>% group_by(firm) %>% mutate(avg_e_jj_l = mean(own_price_elasticity)) %>% ungroup()
 
 df <- fastDummies::dummy_cols(df, select_columns = "firm")
@@ -199,6 +209,7 @@ and fixed effects. Use your estimated coefficients to calculate own-price
 elasticities. Discuss your results.
 
 ```{r}
+# TODO: add fixed effects.
 df <- df %>% mutate(ln_mshare_s = log(mshare_s))
 
 X <- glue("price", "horsepower", "fuel", "width","height", "domestic", "year", 
