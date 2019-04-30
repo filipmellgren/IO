@@ -155,10 +155,11 @@ lm.fit <- lm(formula, data = df)
 # TODO: include, fix a table with this one as a column next to lm.
 # TODO: Country or year fixed effects?
 X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
-fe_formula <- glue("log(price) ~", X_fe)
+fe_formula <- glue("log(price) ~", X_fe, "factor(co)", .sep = "+")
 fe.fit <- lm(fe_formula, data = df)
 
-stargazer(lm.fit, fe.fit, type = "text")
+stargazer(lm.fit, fe.fit, type = "text", omit = "factor", omit.yes.no =
+c("Yes", "No"))
 ```
 
 
@@ -168,6 +169,9 @@ Calculate the following market shares: (a) the market share of each
 car model, and (b) the market share of each car model in its segment.
 Discuss your findings. Assume that the total market size is the number
 of households, approximated by total population divided by 4
+
+Comment: "In practice, the potential market size in a given year may be lower because cars are durable and consumers who just purchased a car may not consider buying a new one
+immediately."
 
 ```{r}
 # TODO: maybe take the five highest and five lowest per a and b. Most popular cars and least popular car
@@ -202,6 +206,8 @@ df %>% group_by(firm) %>% summarise(mean = mean(mshare)*100, se = sd(mshare),
 Estimate demand using a logit specification (Berry, 1994). Use different estimators such as OLS and fixed effects. Use your estimated
 coefficients to calculate own-price elasticities. Interpret your results.
 Are there any interesting differences across firms?
+
+The fixed effects may be on a model level!!!!
 ```{r}
 df <- df %>% group_by(yearcountry) %>% mutate(tot_qu = sum(qu),
                                         oshare = 1 - tot_qu/msize) %>% ungroup()
@@ -215,12 +221,12 @@ X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", "
 X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
 
 formula <- glue("ln_dmshare ~", X)
-fe_formula <- glue("ln_dmshare ~", X_fe)
+fe_formula <- glue("ln_dmshare ~", X_fe, "factor(co)", .sep = "+")
 lm.logit <- lm(formula, data = df)
 fe.logit <- lm(fe_formula, data = df)
 
 # TODO: do we present this or is it enough with the elasticities?
-stargazer(lm.logit, fe.logit, type = "text")
+stargazer(lm.logit, fe.logit, type = "text", omit = "factor")
 ```
 
 ```{r}
@@ -336,8 +342,8 @@ df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
                                  avg_lerner = mean(lerner),
                                  avg_price = mean(price)) %>% ungroup()
 
-# Table for question 7
-df %>% select(firm, avg_price, avg_mc, avg_markup, avg_lerner) %>% 
+# Table for question 7. Pre merger descriptives. 
+pricing_table <- df %>% select(firm, avg_price, avg_mc, avg_markup, avg_lerner) %>% 
   distinct(firm, .keep_all = TRUE) %>% arrange(-avg_price)
 
 ```
@@ -371,6 +377,13 @@ dataframe <- dataframe %>% mutate(mc = mc * ratio_mc,
                                   lerner_new = markup_new / price_new,
                                   dprice = (price_new-price)/price)
 
+# By firm: avg_price, avg_mc, avg_markup, avg_lerner
+dataframe <- dataframe %>% group_by(firm) %>% mutate(avg_markup_new = mean(markup_new),
+                                 avg_mc_new = mean(mc),
+                                 avg_lerner_new = mean(lerner_new),
+                                 avg_price_new = mean(price_new)) %>% ungroup()
+
+
   return(dataframe)
 }
 ```
@@ -385,6 +398,18 @@ merger_df %>% filter(year == 1998, country == 3) %>%
   select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% summary_table()
 ```
 ## Post merger
+```{r}
+# Compare per-merger and post-merger prices: 
+# combine with table from 7
+pricing_table_new <- merger_df %>% select(firm, avg_price_new) %>% 
+  distinct(firm, .keep_all = TRUE)
+
+full_join(pricing_table, pricing_table_new) %>% 
+  mutate("Relative price change" = avg_price_new/avg_price-1) %>%
+  select(avg_price, avg_price_new, "Relative price change", everything()) 
+```
+
+
 
 ```{r}
 ger_table <- merger_df %>% filter(year == 1998, country == 3) %>% drop_na() %>% 
