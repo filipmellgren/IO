@@ -18,10 +18,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
 ```{r cars, include = FALSE}
 library(rio)
 library(tidyverse)
@@ -30,8 +26,9 @@ library(ggthemes)
 library(stargazer)
 library(reshape2)
 library(xtable)
-library(plm)
+#library(plm)
 library(glue)
+library(zoo)
 ```
 # Step 0
 ```{r}
@@ -67,16 +64,18 @@ summary_table<- function(summary){
 # Summary statistics to Q1.
 # TODO: Group by country? If so, stack them, keep the same columns
 descriptive_table <- df %>%
-  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop, ngdp) %>% 
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop) %>% 
+  mutate(pop = pop/1000000) %>%
   map(function(x) summary_stats(x)) %>% summary_table() %>% mutate(country = "All")
 
 for (c in 1:5) {
  descriptive_table <-  rbind(descriptive_table, df %>% filter(country == c) %>% 
-  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop, ngdp) %>% 
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop) %>% 
+    mutate(pop = pop/1000000) %>%
   map(function(x) summary_stats(x)) %>% summary_table() %>% mutate(country = c))
 }
 
-library(zoo)
+
 
 tmp_table <- descriptive_table %>% arrange(Variable) %>% 
   mutate("se" = paste(S.e., ")", sep = ""),
@@ -84,8 +83,38 @@ tmp_table <- descriptive_table %>% arrange(Variable) %>%
   select(Variable, Mean_se, country) %>% # Add min and max later for simplicity
   spread(key = country, value = Mean_se)
 
-rbind(tmp_table, tmp_table) %>% arrange(Variable) %>% 
-  filter(Variable != "country") %>% select(Variable, All, "1", "2", "3", "4", "5")
+tmp_table <- rbind(tmp_table, tmp_table) %>% arrange(Variable) %>% 
+  filter(Variable != "country") %>% 
+  select(Variable, All, "1", "2", "3", "4", "5") %>% rename("Belgium" = "1", 
+                                                            "France" = "2",
+                                                            "Germany" = "3",
+                                                            "Italy" = "4",
+                                                            "UK" = "5")
+
+tmp_table_means <- tmp_table[seq(1, nrow(tmp_table), 2), ] %>% mutate(All = word(All,1),
+                                                   Belgium = word(Belgium),
+                                                   France = word(France,1),
+                                                   Germany = word(Germany,1),
+                                                   Italy = word(Italy,1),
+                                                   UK = word(UK,1))
+
+tmp_table_se <- tmp_table[seq(1, nrow(tmp_table), 2), ] %>% mutate(All = word(All,2),
+                                                   Belgium = word(Belgium,2),
+                                                   France = word(France,2),
+                                                   Germany = word(Germany,2),
+                                                   Italy = word(Italy,2),
+                                                   UK = word(UK,2))
+minmax_table <- df %>%
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop) %>% 
+  mutate(pop = pop/1000000) %>%
+  map(function(x) summary_stats(x)) %>% summary_table() %>% 
+  select(Variable, Min., Max.) %>% filter(Variable != "country")
+
+                                                   
+final_table <- rbind(tmp_table_means, tmp_table_se) %>% full_join(minmax_table) %>% arrange(Variable) %>% 
+  select(Variable, All, Min., Max., Belgium, France, Germany, Italy, UK)
+
+final_table
 ```
 
 ```{r}
