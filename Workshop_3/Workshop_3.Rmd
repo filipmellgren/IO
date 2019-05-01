@@ -139,11 +139,19 @@ Excluded co (model code), segment (ordinal variable), firm, country, because the
 Also height and width were excluded, because they were not deemed as important
 Pop was excluded because it is not a feature related to the cars
 
+Discuss the difference in prices across countries. Look at UK mean prices for example.
+
+Tendency to buy domestic cars
+
+Mention the data set that we have access to (briefly)
+
 # 2 Hedonic price regression
 
 ```{r}
 # TODO: add the correct variables to X
 # TODO: Squeeze the latex table
+# TODO: Add country f.e. to the normal 
+# TODO: Add segment dummies?
 
 X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", .sep = "+")
 
@@ -152,8 +160,6 @@ lm.fit <- lm(formula, data = df)
 
 ```
 ```{r}
-# TODO: include, fix a table with this one as a column next to lm.
-# TODO: Country or year fixed effects?
 X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
 fe_formula <- glue("log(price) ~", X_fe, "factor(co)", .sep = "+")
 fe.fit <- lm(fe_formula, data = df)
@@ -202,6 +208,7 @@ df %>% group_by(firm) %>% summarise(mean = mean(mshare)*100, se = sd(mshare),
 
 
 # 4 Logit demand
+Supposed to pool the data?
 
 Estimate demand using a logit specification (Berry, 1994). Use different estimators such as OLS and fixed effects. Use your estimated
 coefficients to calculate own-price elasticities. Interpret your results.
@@ -302,6 +309,10 @@ df %>% group_by(firm) %>% summarise(mean = abs(mean(e_jj_nl))) %>%
 
 
 # 6 Instruments
+
+Goldberg, Verboven 2001 section 4.2 provides some insight: variables that shift the producers' supply relations, but are excluded from the demand equations, make natural instruments
+ 
+ 
 Suggest two types of instruments that could be used to solve the endogeneity problem of the price variable. Why do you propose these instruments?
 
 Want to find something that shifts the supply curve:
@@ -482,6 +493,7 @@ One aspect is sales and marketing. The car market is likely to be characterized 
 
 Another aspect to be considered is the number of nests. We believe that a model using a richer variety of nests would more accurately capture the market behavior. [Filip: I don’t remember what we said here?]
 
+Taxes varying across nation? or is it captured by country dummies?
 
 
 ```{r}
