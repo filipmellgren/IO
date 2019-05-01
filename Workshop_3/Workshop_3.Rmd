@@ -48,7 +48,7 @@ Could be the case: "Note that the panel is unbalanced because most models are no
 summary_stats <- function(x){
   x <- as.matrix(x)
   
-  summary <- rbind(mean(x), sd(x, na.rm = TRUE), min(x, na.rm = TRUE), 
+  summary <- rbind(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE), min(x, na.rm = TRUE), 
                    max(x, na.rm = TRUE))
     return(summary)
 }
@@ -451,14 +451,25 @@ ger_table <- merger_df %>% filter(year == 1998, country == 3) %>% drop_na() %>%
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
 
 # GM
-gm_table <- merger_df %>% filter(year == 1998, country == 3, firm == 15) %>% drop_na() %>% 
+gm_table <- merger_df %>% filter(year == 1998, country == 3, firm == 15) %>% #drop_na() %>% 
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
 
 # VW
 vw_table <- merger_df %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
 
-price_change_table <- rbind(ger_table, gm_table, vw_table) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% select(-dprice) 
+# Segments
+segment_price_change <- tibble()
+for (s in 1:5) {
+  segment_price_change <- 
+    rbind(segment_price_change, merger_df %>% 
+            filter(year == 1998, segment == s) %>% drop_na() %>% 
+            select(price, price_new, dprice) %>% map(function(x) 
+              summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)))
+}
+
+
+price_change_table <- rbind(ger_table, gm_table, vw_table, segment_price_change) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% select(-dprice) 
 
 price_change_table
 ```
@@ -479,19 +490,32 @@ merger_df_9 %>% filter(year == 1998, country == 3) %>%
 ```
 
 ```{r}
-# TODO: Add the five segments like the others were added
 ger_table <- merger_df_9 %>% filter(year == 1998, country == 3) %>% drop_na() %>% 
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
 
 # GM
-gm_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 15) %>% drop_na() %>% 
+gm_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 15) %>% # Can't drop_na()
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
 
 # VW
 vw_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
 
-price_change_table_2 <- rbind(ger_table, gm_table, vw_table) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% select(-dprice)
+# Segments
+segment_price_change2 <- tibble()
+for (s in 1:5) {
+  segment_price_change2 <- 
+    rbind(segment_price_change2, merger_df_9 %>% 
+            filter(year == 1998, segment == s) %>% drop_na() %>% 
+            select(price, price_new, dprice) %>% map(function(x) 
+              summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)))
+}
+
+
+
+
+price_change_table_2 <- rbind(ger_table, gm_table, vw_table, segment_price_change2) %>% select(Variable, Mean, name) %>% 
+  spread(key = Variable, value = Mean) %>% select(-dprice)
 
 price_change_table_2 <- price_change_table_2 %>% rename(efficient_price = price_new)
 ```
@@ -501,7 +525,7 @@ price_change_table_2 <- price_change_table_2 %>% rename(efficient_price = price_
 pre_post_table <- full_join(price_change_table, price_change_table_2)
 
 pre_post_table <- pre_post_table %>% gather(price_type, price, -name) %>% 
-  mutate(treatment = if_else(price_type == "price", 0, 1))
+  mutate(treatment = if_else(price_type == "price", 0, 1)) # WHy do we do this?
 ```
 
 
@@ -525,24 +549,25 @@ pre_post_table <- pre_post_table %>% select(-treatment) %>%
   spread(price_type, price) 
 ```
 ```{r}
-# TODO: make a similar one for segments
-pre_post_table %>%
+graph_table <- pre_post_table %>% filter(name %in% c("ger", "gm", "vw"))
+
+graph_table %>%
   ggplot(aes(x = as.factor("Pre merger"), y = price)) +
   geom_segment(aes(xend = as.factor("Post merger"), yend = price_new,color = "#336666")) +
-  geom_segment(aes(xend = as.factor("Post merger"), yend = efficient_price, color = "#9ae5de")) +
+  geom_segment(aes(xend = as.factor("Post merger"), yend = efficient_price, color = "#e3120b")) +
   geom_point(size = 3) +
   geom_point(aes(x = as.factor("Post merger"),y = price_new), size = 3) +
   geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
-  annotate("text", x = 0.85, y = pre_post_table$price, label = as.character(pre_post_table$name)) +
+  annotate("text", x = 0.85, y = graph_table$price, label = as.character(graph_table$name)) +
   labs(title = "What are the effects of merger on prices?", y = "Average price",
        tag = "Graph X") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
-         values =c("#336666"="#336666","#9ae5de"="#9ae5de"), 
+         values =c("#336666"="#336666","#e3120b"="#e3120b"), 
          labels = c("Not cost reducing","Cost reducing")) +
   theme(plot.tag.position = "bottom") +
-  scale_y_continuous(limits=c(10, 20))
+  scale_y_continuous(limits=c(10, 30))
 
   
 ```
@@ -550,5 +575,34 @@ pre_post_table %>%
 ggsave("merger_causal_effect.png", height = 20, width = 12, units = "cm")
 ```
 
+```{r}
+# Graph above, but for segments. 
 
+graph_table <- pre_post_table %>% filter(!name %in% c("ger", "gm", "vw"))
+
+graph_table %>%
+  ggplot(aes(x = as.factor("Pre merger"), y = price)) +
+  geom_segment(aes(xend = as.factor("Post merger"), yend = price_new,color = "#336666"),
+               size = 0.8) +
+  geom_segment(aes(xend = as.factor("Post merger"), yend = efficient_price, color = "#e3120b"), size = 0.8) +
+  geom_point(size = 3) +
+  geom_point(aes(x = as.factor("Post merger"),y = price_new), size = 3) +
+  geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
+  theme_economist() + scale_fill_economist() + scale_color_economist() +
+  annotate("text", x = 0.8, y = graph_table$price, label = as.character(graph_table$name)) +
+  labs(title = "What are the effects of merger on prices?", y = "Average price",
+       tag = "Graph X") +
+  scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
+  scale_colour_manual(guide = "legend", name = "Merger type:",
+         values =c("#336666"="#336666","#e3120b"="#e3120b"), 
+         labels = c("Not cost reducing","Cost reducing")) +
+  theme(plot.tag.position = "bottom") +
+  scale_y_continuous(limits=c(0, 40))
+
+  
+  
+```
+```{r}
+ggsave("merger_causal_effect_segment.png", height = 20, width = 12, units = "cm")
+```
 
