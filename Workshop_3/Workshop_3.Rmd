@@ -117,6 +117,8 @@ final_table <- rbind(tmp_table_means, tmp_table_se) %>% full_join(minmax_table) 
 
 final_table
 ```
+Table 1 shows summary statistics for the five EU countries at a country level and at a European level. Perhaps the most interesting finding is that the average price of cars in the UK is well above the European average, at 24.4 compared to 18.5. We note that the average car sold in the UK is not drastically different from its European counterparts when it comes to physical attributes of the car, which makes the finding hard to rationalise. However, a potential explanation could be higher costs associated with the policy of driving on the right side of the road.
+
 
 ```{r}
 # Correlation matrix to Q1.
@@ -147,25 +149,27 @@ Mention the data set that we have access to (briefly)
 
 # 2 Hedonic price regression
 
+Table 2 shows a price regression with car characteristics as explanatory variables. Attributes that seem to be associated with a highe rcar price include horsepower and the width, reflecting that larger more powerful cars are more expensive.  
+
+We note that over the period, cars seem to have got less expensive, averaging at minus 1 percent per year according to the most elaborated specification with car model fixed effects.
+
 ```{r}
 # TODO: add the correct variables to X
 # TODO: Squeeze the latex table
-# TODO: Add country f.e. to the normal 
 # TODO: Add segment dummies?
 
-X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", .sep = "+")
+X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", 
+          "country1", "country2", "country3", "country4", .sep = "+")
 
 formula <- glue("log(price) ~", X)
 lm.fit <- lm(formula, data = df)
 
 ```
 ```{r}
-X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
-fe_formula <- glue("log(price) ~", X_fe, "factor(co)", .sep = "+")
+fe_formula <- glue("log(price) ~", X, "factor(co)", .sep = "+")
 fe.fit <- lm(fe_formula, data = df)
 
-stargazer(lm.fit, fe.fit, type = "text", omit = "factor", omit.yes.no =
-c("Yes", "No"))
+stargazer(lm.fit, fe.fit, type = "text", omit = "factor")
 ```
 
 
@@ -178,6 +182,8 @@ of households, approximated by total population divided by 4
 
 Comment: "In practice, the potential market size in a given year may be lower because cars are durable and consumers who just purchased a car may not consider buying a new one
 immediately."
+
+
 
 ```{r}
 # TODO: maybe take the five highest and five lowest per a and b. Most popular cars and least popular car
@@ -194,18 +200,23 @@ df <- df %>% mutate(mshare_s = qu / tot_s,
 
 # Table 1
 df %>% mutate(mshare = mshare *100,
-              mshare = mshare_s *100) %>% 
+              mshare_s = mshare_s *100) %>% 
   select(mshare, mshare_s, ln_mshare, ln_mshare_s) %>% 
   map(function(x) summary_stats(x)) %>% summary_table()
 
 # market shares by firm over year, car models and countries
 # Likely not necessary
-df %>% group_by(firm) %>% summarise(mean = mean(mshare)*100, se = sd(mshare),
-                                    min = min(mshare), max = max(mshare))
+df %>% group_by(firm) %>% summarise(mean = mean(mshare)*100, se = sd(mshare*100),
+                                    min = min(mshare*100), max = max(mshare*100))
 
 ```
+To begin with, the market share of each car model is low, averaging at 0.16%, and no car model ever had a higher overal market share than the Fiat Uno, which in Italy 1986 held a 3.03% market share. Among the 24 observations where a market share above 2.5% were observed, 14 were Fiats sold in Italy. Another 7 were VW sold in Germany, and 2 were Renaults sold in France. These anecdotes reflect a broader pattern of car models being more popular in their country of origin, as noticed in the correlation between country and domestic (0.59).
 
+In the respecitve segments, market shares tend to be much higher, averaging at 6.5% rather than 0.16%, and some markets experience extreme concentration within segments, as hinted by the maximum segment share observed being 100%. 
 
+We further investigated where extreme segment market shares are observed and found that the luxury segment is more often dominated by a few models. Notably, out of 91 models that experienced a market shares above 50%, 63 (69%) were in the luxury segment, and of the 626 models with at least 25% market share, 214 (34%) were in the luxury segment. 
+
+Overall, we expect segments to be important in the analysis as we expect consumers to be less likely to switch to car models between segments as a result of price changes on one model in a segment. This leaves room for market power as concentration within segments is typically higher, particularly in the luxury segment.
 
 # 4 Logit demand
 Supposed to pool the data?
@@ -214,7 +225,7 @@ Estimate demand using a logit specification (Berry, 1994). Use different estimat
 coefficients to calculate own-price elasticities. Interpret your results.
 Are there any interesting differences across firms?
 
-The fixed effects may be on a model level!!!!
+
 ```{r}
 df <- df %>% group_by(yearcountry) %>% mutate(tot_qu = sum(qu),
                                         oshare = 1 - tot_qu/msize) %>% ungroup()
@@ -329,8 +340,7 @@ Furthermore, we suggest to use data on strikes specific to the car industry. Thi
 
 
 # 7 Nash Bertrand
-Assume Nash-Bertrand competition in prices on the supply side. Calculate the implied marginal costs, markups and Lerner index based on
-the estimates from the nested logit specification in [5]. Present firmlevel averages of price, marginal cost, markup and the Lerner index.
+Assume Nash-Bertrand competition in prices on the supply side. Calculate the implied marginal costs, markups and Lerner index based on the estimates from the nested logit specification in [5]. Present firmlevel averages of price, marginal cost, markup and the Lerner index.
 
 Do you think your results are economically meaningful? Explain and discuss.
 
@@ -358,7 +368,9 @@ pricing_table <- df %>% select(firm, avg_price, avg_mc, avg_markup, avg_lerner) 
   distinct(firm, .keep_all = TRUE) %>% arrange(-avg_price)
 
 ```
+Table X present firm level averages, ranked by average price. Apparently, the Lerner index is higher for low priced cars (the correlation between price and the lerner index is -82%). This finding can be justified when considering that prices observed are prices to consumers (in retail catalogues), not to car dealers which would be a better measure for the car manufacturers. We think the dealer would typically add something close to a constant fee per vehicle to cover her costs of selling it, absorbing most of the mark up observed for cheap cars, whereas larger cars with higher mark ups in absolute terms will still be able to maintain a markup after subtracting the fee. (Note to self: info about prices obtained form footnote 2 in Goldberg, Verboven 2001)
 
+The results are meaningful from an economic point of view insofar as the assumptions of the model hold
 
 # 8 Merger
 Note that Matilda made a mmistake in the lecture, she divided by 4 to get a 25% decrease.
