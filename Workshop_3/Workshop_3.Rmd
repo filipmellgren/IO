@@ -368,12 +368,23 @@ pricing_table <- df %>% select(firm, avg_price, avg_mc, avg_markup, avg_lerner) 
   distinct(firm, .keep_all = TRUE) %>% arrange(-avg_price)
 
 ```
-Table X present firm level averages, ranked by average price. Apparently, the Lerner index is higher for low priced cars (the correlation between price and the lerner index is -82%). This finding can be justified when considering that prices observed are prices to consumers (in retail catalogues), not to car dealers which would be a better measure for the car manufacturers. We think the dealer would typically add something close to a constant fee per vehicle to cover her costs of selling it, absorbing most of the mark up observed for cheap cars, whereas larger cars with higher mark ups in absolute terms will still be able to maintain a markup after subtracting the fee. (Note to self: info about prices obtained form footnote 2 in Goldberg, Verboven 2001)
+Table X present firm level averages, ranked by average price. Apparently, the Lerner index is higher for low priced cars (the correlation between price and the lerner index is -82%). This finding can be justified when considering that prices observed are prices to consumers (in retail catalogues), not to car dealers which would be a better measure for the car manufacturers. We think the dealer would typically add something close to a constant fee per vehicle to cover her costs of selling it, absorbing most of the mark up observed for cheap cars, whereas larger cars with higher mark ups in absolute terms (correlation between markups and price is 17%) will still be able to maintain some markup after subtracting the fee. (Note to self: info about prices obtained form footnote 2 in Goldberg, Verboven 2001)
 
-The results are meaningful from an economic point of view insofar as the assumptions of the model hold
+The results are obviously meaningful from an economic point of view insofar as the assumptions of the model hold. The average price is, as already discussed, the observed average price is what consumers paid for a car of a particular brand between 1970 and 1999 (in 1000s of euros in 1999 purchasing power), the marginal cost is the estimated marginal cost manufacturers face when producing the car model (in the same units) and the mark up is simply the difference between these. The average lerner index is the markups over price and a higher value indicate that a firm enjoys a higher market power, i.e. is either more efficient in production (cheaper marginal costs) or sells a product consumers are willing to pay a premium for. 
+
+The lerner index has another economic meaning, namely that the absolute value of the inverse lerner is the price elasticity of demand facing each firm. Derivation?
+
+```{r}
+# For fun =)
+df %>% ggplot(aes(x = price, y = markup, color = as.factor(segment))) +
+  geom_point(alpha = 0.2)
+
+# subtracting a fixed fee such as the minimum markup (about 3), the relationship looks very different
+df %>% ggplot(aes(x = price, y = (markup)/(price), color = as.factor(segment))) +
+  geom_point(alpha = 0.2)
+```
 
 # 8 Merger
-Note that Matilda made a mmistake in the lecture, she divided by 4 to get a 25% decrease.
 
 ```{r merger_function}
 post_merger_df <- function(dataframe, ratio_mc){
@@ -429,7 +440,8 @@ pricing_table_new <- merger_df %>% select(firm, avg_price_new) %>%
 
 full_join(pricing_table, pricing_table_new) %>% 
   mutate("Relative price change" = avg_price_new/avg_price-1) %>%
-  select(avg_price, avg_price_new, "Relative price change", everything()) 
+  select(avg_price, avg_price_new, "Relative price change", everything()) %>% 
+  rename("Pre merger price" = avg_price, "Post merger price" = avg_price_new)
 ```
 
 
