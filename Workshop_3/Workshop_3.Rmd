@@ -64,7 +64,6 @@ summary_table<- function(summary){
 
 ```{r}
 # Summary statistics to Q1.
-# TODO: Group by country? If so, stack them, keep the same columns
 descriptive_table <- df %>%
   select(country, year, domestic, qu, price, princ, horsepower, fuel, pop) %>% 
   mutate(pop = pop/1000000) %>%
@@ -113,10 +112,10 @@ minmax_table <- df %>%
   select(Variable, Min., Max.) %>% filter(Variable != "country")
 
                                                    
-final_table <- rbind(tmp_table_means, tmp_table_se) %>% full_join(minmax_table) %>% arrange(Variable) %>% 
+Table_1 <- rbind(tmp_table_means, tmp_table_se) %>% full_join(minmax_table) %>% arrange(Variable) %>% 
   select(Variable, All, Min., Max., Belgium, France, Germany, Italy, UK)
 
-xtable(final_table)
+xtable(Table_1)
 ```
 Table 1 shows summary statistics for the five EU countries at a country level and at a European level. Perhaps the most interesting finding is that the average price of cars in the UK is well above the European average, at 24.4 compared to 18.5. We note that the average car sold in the UK is not drastically different from its European counterparts when it comes to physical attributes of the car, which makes the finding hard to rationalise. However, a potential explanation could be higher costs associated with the policy of driving on the right side of the road.
 
@@ -200,10 +199,12 @@ df <- df %>% mutate(mshare_s = qu / tot_s,
                     ln_mshare_s = log(mshare_s))
 
 # Table 1
-df %>% mutate(mshare = mshare *100,
+Table_3 <- df %>% mutate(mshare = mshare *100,
               mshare_s = mshare_s *100) %>% 
   select(mshare, mshare_s, ln_mshare, ln_mshare_s) %>% 
   map(function(x) summary_stats(x)) %>% summary_table()
+
+xtable(Table_3)
 
 # market shares by firm over year, car models and countries
 # Likely not necessary
@@ -295,8 +296,10 @@ sigma <- lm.nest[["coefficients"]][["ln_mshare_s"]]
 df <- df %>% mutate(e_jj_nl = alpha_2 * (1/(1-sigma) - (sigma/(1-sigma)) * mshare_s  - mshare)*price)
 
 # TODO: fix output
-df %>% select(e_jj_nl,own_price_elasticity) %>%
+Table_4 <- df %>% select(e_jj_nl,own_price_elasticity) %>%
   map(function(x) summary_stats(x)) %>% summary_table()
+
+xtable(Table_4, caption = "Aggregated elasticity estimates")
 ```
 
 ```{r}
@@ -367,6 +370,7 @@ df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
 # Table for question 7. Pre merger descriptives. 
 pricing_table <- df %>% select(firm, avg_price, avg_mc, avg_markup, avg_lerner) %>% 
   distinct(firm, .keep_all = TRUE) %>% arrange(-avg_price)
+
 
 ```
 Table X present firm level averages, ranked by average price. Apparently, the Lerner index is higher for low priced cars (the correlation between price and the lerner index is -82%). This finding can be justified when considering that prices observed are prices to consumers (in retail catalogues), not to car dealers which would be a better measure for the car manufacturers. We think the dealer would typically add something close to a constant fee per vehicle to cover her costs of selling it, absorbing most of the mark up observed for cheap cars, whereas larger cars with higher mark ups in absolute terms (correlation between markups and price is 17%) will still be able to maintain some markup after subtracting the fee. (Note to self: info about prices obtained form footnote 2 in Goldberg, Verboven 2001)
@@ -439,11 +443,12 @@ merger_df %>% filter(year == 1998, country == 3) %>%
 pricing_table_new <- merger_df %>% select(firm, avg_price_new) %>% 
   distinct(firm, .keep_all = TRUE)
 
-full_join(pricing_table, pricing_table_new) %>% 
-  mutate("Delta price (pct)" = 1000 * (avg_price_new/avg_price-1)) %>%
+Table_5 <- full_join(pricing_table, pricing_table_new) %>% 
+  mutate("Delta price (p.mille)" = 1000 * (avg_price_new/avg_price-1)) %>%
   select(firm, avg_price, avg_price_new, "Delta price (pct)", everything()) %>% 
   rename("Pre price" = avg_price, "Post price" = avg_price_new) %>% 
-  column_to_rownames(var = "firm") %>% xtable(digits = 2)
+  column_to_rownames(var = "firm") %>% 
+  xtable(digits = 2, caption = "Firm level price info")
 ```
 
 
@@ -563,7 +568,7 @@ graph_table %>%
   geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.85, y = graph_table$price, label = as.character(graph_table$name)) +
-  labs(title = "What are the effects of merger on prices?", y = "Average price",
+  labs(title = "Merger effects on prices", y = "Average price",
        tag = "Graph X") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
@@ -593,7 +598,7 @@ graph_table %>%
   geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.8, y = graph_table$price, label = as.character(graph_table$name)) +
-  labs(title = "What are the effects of merger on prices?", y = "Average price",
+  labs(title = "Merger effects on prices", y = "Average price",
        tag = "Graph X") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
