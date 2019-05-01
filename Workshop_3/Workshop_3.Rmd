@@ -3,12 +3,13 @@ title: "Untitled"
 author: "Christopher Hayes, David Hakula, Filip Mellgren"
 date: '2019-04-13'
 output:
+  word_document: default
+  pdf_document: default
   html_document:
     code_folding: hide
     df_print: kable
     highlight: zenburn
     theme: readable
-  pdf_document: default
 ---
 ---
 
@@ -115,7 +116,7 @@ minmax_table <- df %>%
 final_table <- rbind(tmp_table_means, tmp_table_se) %>% full_join(minmax_table) %>% arrange(Variable) %>% 
   select(Variable, All, Min., Max., Belgium, France, Germany, Italy, UK)
 
-final_table
+xtable(final_table)
 ```
 Table 1 shows summary statistics for the five EU countries at a country level and at a European level. Perhaps the most interesting finding is that the average price of cars in the UK is well above the European average, at 24.4 compared to 18.5. We note that the average car sold in the UK is not drastically different from its European counterparts when it comes to physical attributes of the car, which makes the finding hard to rationalise. However, a potential explanation could be higher costs associated with the policy of driving on the right side of the road.
 
@@ -439,9 +440,10 @@ pricing_table_new <- merger_df %>% select(firm, avg_price_new) %>%
   distinct(firm, .keep_all = TRUE)
 
 full_join(pricing_table, pricing_table_new) %>% 
-  mutate("Relative price change" = avg_price_new/avg_price-1) %>%
-  select(avg_price, avg_price_new, "Relative price change", everything()) %>% 
-  rename("Pre merger price" = avg_price, "Post merger price" = avg_price_new)
+  mutate("Delta price (pct)" = 1000 * (avg_price_new/avg_price-1)) %>%
+  select(firm, avg_price, avg_price_new, "Delta price (pct)", everything()) %>% 
+  rename("Pre price" = avg_price, "Post price" = avg_price_new) %>% 
+  column_to_rownames(var = "firm") %>% xtable(digits = 2)
 ```
 
 
@@ -553,8 +555,9 @@ graph_table <- pre_post_table %>% filter(name %in% c("ger", "gm", "vw"))
 
 graph_table %>%
   ggplot(aes(x = as.factor("Pre merger"), y = price)) +
-  geom_segment(aes(xend = as.factor("Post merger"), yend = price_new,color = "#336666")) +
-  geom_segment(aes(xend = as.factor("Post merger"), yend = efficient_price, color = "#e3120b")) +
+  geom_segment(aes(xend = as.factor("Post merger"), yend = price_new,color = "#336666"),
+               size = 0.8) +
+  geom_segment(aes(xend = as.factor("Post merger"), yend = efficient_price, color = "#e3120b"), size = 0.8) +
   geom_point(size = 3) +
   geom_point(aes(x = as.factor("Post merger"),y = price_new), size = 3) +
   geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
@@ -567,7 +570,7 @@ graph_table %>%
          values =c("#336666"="#336666","#e3120b"="#e3120b"), 
          labels = c("Not cost reducing","Cost reducing")) +
   theme(plot.tag.position = "bottom") +
-  scale_y_continuous(limits=c(10, 30))
+  scale_y_continuous(limits=c(0, 40))
 
   
 ```
