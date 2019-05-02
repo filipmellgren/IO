@@ -32,7 +32,9 @@ library(zoo)
 # Step 0
 ```{r}
 df <- import("Cars.dta")
-df <- df %>% mutate(yearcountry = paste(year, country)) %>% as_tibble()
+df <- df %>% mutate(yearcountry = paste(year, country),
+                    segqty = segment * qu) %>% as_tibble()
+df %>% glimpse()
 ```
 
 # 1 Summary statistics
@@ -63,13 +65,13 @@ summary_table<- function(summary){
 ```{r}
 # Summary statistics to Q1.
 descriptive_table <- df %>%
-  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop) %>% 
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop, segqty) %>% 
   mutate(pop = pop/1000000) %>%
   map(function(x) summary_stats(x)) %>% summary_table() %>% mutate(country = "All")
 
 for (c in 1:5) {
  descriptive_table <-  rbind(descriptive_table, df %>% filter(country == c) %>% 
-  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop) %>% 
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop, segqty) %>% 
     mutate(pop = pop/1000000) %>%
   map(function(x) summary_stats(x)) %>% summary_table() %>% mutate(country = c))
 }
@@ -104,7 +106,7 @@ tmp_table_se <- tmp_table[seq(1, nrow(tmp_table), 2), ] %>% mutate(All = word(Al
                                                    Italy = word(Italy,2),
                                                    UK = word(UK,2))
 minmax_table <- df %>%
-  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop) %>% 
+  select(country, year, domestic, qu, price, princ, horsepower, fuel, pop, segqty) %>% 
   mutate(pop = pop/1000000) %>%
   map(function(x) summary_stats(x)) %>% summary_table() %>% 
   select(Variable, Min., Max.) %>% filter(Variable != "country")
