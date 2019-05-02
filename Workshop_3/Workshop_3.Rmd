@@ -358,7 +358,7 @@ df <- df %>% group_by(firm) %>% mutate(avg_e_jj_nl = mean(e_jj_nl)) %>% ungroup(
 
 ```{r}
 
-Figure_data <- df %>% gather(key = "Specification", value = "value", e_jj_nl, e_jj_nl_fe) %>%group_by(firm, Specification) %>% summarise("mean_el" = abs(mean(value)), "se" = sd(value)/sqrt(n()))
+Figure_data <- df %>% rename("Baseline" = e_jj_nl, "Model F.E" = e_jj_nl_fe) %>% gather(key = "Specification", value = "value", Baseline, "Model F.E") %>% group_by(firm, Specification) %>% summarise("mean_el" = abs(mean(value)), "se" = sd(value)/sqrt(n()))
 
 
   Figure_data %>% ggplot(aes(x = as.factor(reorder(firm, -mean_el)), y = mean_el, fill = Specification)) +
