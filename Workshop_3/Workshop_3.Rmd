@@ -139,20 +139,24 @@ Table 1 shows summary statistics for the five EU countries at a country level an
 ```{r}
 # Correlation matrix to Q1.
 # Strictly necessary?
-cormatdf <- df %>% select(price, qu, year, domestic, horsepower, fuel, princ, weight)
+cormatdf <- df %>% select(price, qu, year, domestic, horsepower, fuel, weight)
 cormat <- round(cor(cormatdf),2)
 
 melted_cormat <- melt(cormat)
 
 melted_cormat %>% ggplot(aes(x=Var1, y=Var2, fill=value)) + 
   geom_tile() + theme_economist() + scale_colour_economist() +
-  labs(title = "TILE", y = " ", x = " ",
-       caption = "caption") +
+  labs( y = " ", x = " ", tag = "Graph 1") +
   scale_fill_gradient2(low = "#336666", high = "#664033", mid = "white", 
    midpoint = 0, limit = c(-1,1), space = "Lab", 
     name="Pearson\nCorrelation") +
   geom_text(aes(Var1, Var2, label = value), color = "black", size = 4)
 ```
+
+```{r}
+ggsave("cormat.png", height = 15, width = 17, units = "cm")
+```
+
 Excluded co (model code), segment (ordinal variable), firm, country, because they are nonsensical
 Also height and width were excluded, because they were not deemed as important
 Pop was excluded because it is not a feature related to the cars
@@ -365,14 +369,14 @@ Figure_data <- df %>% rename("Baseline" = e_jj_nl, "Model F.E" = e_jj_nl_fe) %>%
   geom_bar(stat="identity", position = "dodge")  +
   theme_economist() + scale_fill_manual(values = alpha(c("#336666", "#8abbd0"), 1)) +
   labs(title = "Nested logit absolute elasticities", 
-       y = "(Absolute) Elasticities", x = "Firm ID", tag = "Graph X",
+       y = "(Absolute) Elasticities", x = "Firm ID", tag = "Graph 2",
        caption = "Baseline corresponds to estimates from column 5, Table 2, Model.F.E. correpsonds to column 6. 
-       Bars show two standard errors of the estimate") + 
+       Bars show two standard errors of the estimate.") + 
     geom_errorbar(aes(ymin=mean_el-2*se, ymax=mean_el +2*se), width=.2,
                  position=position_dodge(.9))
 ```
 ```{r}
-ggsave("nested_elast.png", height = 12, width = 20, units = "cm")
+ggsave("nested_elast.png", height = 16, width = 20, units = "cm")
 
 ```
 
@@ -499,7 +503,7 @@ pricing_table_new <- merger_df %>% select(firm, avg_price_new) %>%
 
 Table_5 <- full_join(pricing_table, pricing_table_new) %>% 
   mutate("Delta price (p.mille)" = 1000 * (avg_price_new/avg_price-1)) %>%
-  select(firm, avg_price, avg_price_new, "Delta price (pct)", everything()) %>% 
+  select(firm, avg_price, avg_price_new, "Delta price (p.mille)", everything()) %>% 
   rename("Pre price" = avg_price, "Post price" = avg_price_new) %>% 
   column_to_rownames(var = "firm") %>% 
   xtable(digits = 2, caption = "Firm level price info")
@@ -623,7 +627,7 @@ graph_table %>%
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.85, y = graph_table$price, label = as.character(graph_table$name)) +
   labs(title = "Merger effects on prices", y = "Average price",
-       tag = "Graph X") +
+       tag = "Graph 3") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
          values =c("#336666"="#336666","#e3120b"="#e3120b"), 
@@ -653,7 +657,7 @@ graph_table %>%
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.8, y = graph_table$price, label = as.character(graph_table$name)) +
   labs(title = "Merger effects on prices", y = "Average price",
-       tag = "Graph X") +
+       tag = "Graph 4") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
          values =c("#336666"="#336666","#e3120b"="#e3120b"), 
