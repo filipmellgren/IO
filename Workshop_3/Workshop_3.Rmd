@@ -310,9 +310,9 @@ X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic",
           "year", "ln_mshare_s","country1", "country2", "country3", "country4", .sep = "+")
 X_fe <- glue(X, "factor(co)", .sep = "+")
 
-formula <- glue("ln_dmshare ~", X)
+formula <- glue("ln_mshare ~", X)
 lm.nest <- lm(formula, data = df)
-fe_formula <- glue("ln_dmshare ~", X_fe)
+fe_formula <- glue("ln_mshare ~", X_fe)
 fe.nest <- lm(fe_formula, data = df)
 ```
 
@@ -346,8 +346,7 @@ xtable(Table_4, caption = "Aggregated elasticity estimates")
 ```
 
 ```{r}
-Table2 <- stargazer(lm.fit, fe.fit, lm.logit, fe.logit, lm.nest, fe.nest,
-                    type = "text", omit = "factor", column.sep.width = "2pt", font.size = "footnotesize")
+Table2 <- stargazer(lm.fit, fe.fit, lm.logit, fe.logit, lm.nest, fe.nest, omit = "factor", column.sep.width = "2pt", font.size = "footnotesize", omit.stat = "f")
 ```
 
 
@@ -366,9 +365,13 @@ df %>% group_by(firm) %>% summarise(mean = abs(mean(own_price_elasticity))) %>%
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   labs(title = "Elasticities")
 
-df %>% group_by(firm) %>% summarise(mean = abs(mean(e_jj_nl))) %>% 
-  ggplot(aes(x = reorder(firm, -mean), y = mean)) +
-  geom_bar(stat="identity")
+df %>% group_by(firm) %>% summarise("Baseline" = abs(mean(e_jj_nl)), "Model F.E." = abs(mean(e_jj_nl_fe))) %>% 
+  gather(key = "Specification", value = "value", "Baseline", "Model F.E.") %>% 
+  ggplot(aes(x = as.factor(reorder(firm, -value)), y = value, fill = Specification)) +
+  geom_bar(stat="identity", position = "dodge")  +
+  theme_economist() + scale_fill_economist() + scale_color_economist() +
+  labs(title = "Nested logit absolute elasticities", 
+       y = "(Absolute) Elasticities", x = "Firm ID", tag = "Graph X")
 ```
 
 
