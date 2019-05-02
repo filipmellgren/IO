@@ -3,8 +3,6 @@ title: "Untitled"
 author: "Christopher Hayes, David Hakula, Filip Mellgren"
 date: '2019-04-13'
 output:
-  word_document: default
-  pdf_document: default
   html_document:
     code_folding: hide
     df_print: kable
@@ -183,6 +181,17 @@ of households, approximated by total population divided by 4
 Comment: "In practice, the potential market size in a given year may be lower because cars are durable and consumers who just purchased a car may not consider buying a new one
 immediately."
 
+Our assumptions about market structure and consumer options enable us to empirically estimate the deterministic component of utility $\delta_j$ from any inside good $j$ as a function of its market share $s_j$ relative to that of the outside good (both observable variables).
+
+Most crucial is our multinomial logit assumption concerning the distribution of the structural error in the utility function ($\varepsilon_{i0},...,\varepsilon_{iJ}$), which we assume to be type 1 extreme value distributed. 
+
+$s_j = \frac{q_j}{\sum_{h=1}^{J}q_h} = \frac{N*P_{ij}}{N}=P_{ij} = P\{\varepsilon_{i0},...,\varepsilon_{iJ}: u^{*}_{ij}>u^{*}_{ik}$ for $j\neq k\} \underbrace{=}_{\because\text{ multinomial logit}} \frac{exp(\delta_{ij})}{\sum_{h=0}^{J}exp(\delta_{ih})}$
+
+Taking logs:
+$\delta_{j} = log(s_j) + log(\underbrace{\sum_{h=0}^{J}exp(\delta_{ih})}_{\delta_0=0 \Rightarrow exp(\delta_0)=1}) = log(s_j) + \underbrace{log(1 + \sum_{h=1}^{J}exp(\delta_{ih}))}_{=-log(s_0) \text{ } \because \text{ } \delta_0=0} = log(s_j) - log(s_0)$ 
+
+In specific market $m$:
+$\delta_{jm} = log(s_{jm}) - log(s_{0m}) = X'_{jm}\beta - \alpha p_{jm} + \xi_{jm} = X'_{jm}\beta - \alpha p_{jm} + \underbrace{\xi_j + \xi_m}_\text{fixed effects} + \eta_{jm}$
 
 
 ```{r}
@@ -261,7 +270,7 @@ summary_stats(df$own_price_elasticity) %>% summary_table()
 # What's this good for?
 df <- df %>% group_by(firm) %>% mutate(avg_e_jj_l = mean(own_price_elasticity)) %>% ungroup()
 
-df <- fastDummies::dummy_cols(df, select_columns = "firm")
+#df <- fastDummies::dummy_cols(df, select_columns = "firm")
 
 
 ```
