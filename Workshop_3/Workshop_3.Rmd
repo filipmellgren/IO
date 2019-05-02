@@ -65,7 +65,7 @@ Could be the case: "Note that the panel is unbalanced because most models are no
 summary_stats <- function(x){
   x <- as.matrix(x)
   
-  summary <- rbind(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE), min(x, na.rm = TRUE), 
+  summary <- rbind(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE)/sqrt(nrow(x)), min(x, na.rm = TRUE), 
                    max(x, na.rm = TRUE))
     return(summary)
 }
@@ -274,7 +274,7 @@ lm.logit <- lm(formula, data = df)
 fe.logit <- lm(fe_formula, data = df)
 
 # TODO: do we present this or is it enough with the elasticities?
-stargazer(lm.logit, fe.logit, type = "text", omit = "factor")
+#stargazer(lm.logit, fe.logit, type = "text", omit = "factor")
 ```
 
 ```{r}
@@ -328,7 +328,7 @@ alpha_1_fe <- fe.logit[["coefficients"]][["price"]]
 df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
 
 alpha_2_fe <- fe.nest[["coefficients"]][["price"]]
-sigma_fe <- lm.nest[["coefficients"]][["ln_mshare_s"]]
+sigma_fe <- fe.nest[["coefficients"]][["ln_mshare_s"]]
 
 df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
 df <- df %>% mutate(e_jj_nl = alpha_2 * (1/(1-sigma) - (sigma/(1-sigma)) * mshare_s  - mshare)*price)
@@ -358,20 +358,22 @@ df <- df %>% group_by(firm) %>% mutate(avg_e_jj_nl = mean(e_jj_nl)) %>% ungroup(
 
 ```{r}
 
-# TODO: Make it pretty!
-df %>% group_by(firm) %>% summarise(mean = abs(mean(own_price_elasticity))) %>% 
-  ggplot(aes(x = reorder(firm, -mean), y = mean)) +
-  geom_bar(stat="identity") +
-  theme_economist() + scale_fill_economist() + scale_color_economist() +
-  labs(title = "Elasticities")
+Figure_data <- df %>% gather(key = "Specification", value = "value", e_jj_nl, e_jj_nl_fe) %>%group_by(firm, Specification) %>% summarise("mean_el" = abs(mean(value)), "se" = sd(value)/sqrt(n()))
 
-df %>% group_by(firm) %>% summarise("Baseline" = abs(mean(e_jj_nl)), "Model F.E." = abs(mean(e_jj_nl_fe))) %>% 
-  gather(key = "Specification", value = "value", "Baseline", "Model F.E.") %>% 
-  ggplot(aes(x = as.factor(reorder(firm, -value)), y = value, fill = Specification)) +
+
+  Figure_data %>% ggplot(aes(x = as.factor(reorder(firm, -mean_el)), y = mean_el, fill = Specification)) +
   geom_bar(stat="identity", position = "dodge")  +
-  theme_economist() + scale_fill_economist() + scale_color_economist() +
+  theme_economist() + scale_fill_manual(values = alpha(c("#336666", "#8abbd0"), 1)) +
   labs(title = "Nested logit absolute elasticities", 
-       y = "(Absolute) Elasticities", x = "Firm ID", tag = "Graph X")
+       y = "(Absolute) Elasticities", x = "Firm ID", tag = "Graph X",
+       caption = "Baseline corresponds to estimates from column 5, Table 2, Model.F.E. correpsonds to column 6. 
+       Bars show two standard errors of the estimate") + 
+    geom_errorbar(aes(ymin=mean_el-2*se, ymax=mean_el +2*se), width=.2,
+                 position=position_dodge(.9))
+```
+```{r}
+ggsave("nested_elast.png", height = 12, width = 20, units = "cm")
+
 ```
 
 
