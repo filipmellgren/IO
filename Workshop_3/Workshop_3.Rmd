@@ -36,6 +36,7 @@ df <- df %>% mutate(yearcountry = paste(year, country),
                     i = 1)
 df <- df %>% group_by(yearcountry) %>% mutate(agg.cty.yr.qu = sum(qu),
                                               N = sum(i)) %>% ungroup()
+
 df <- df %>% mutate(qw = qu / (agg.cty.yr.qu/N)) %>% as_tibble()
 df <- df %>% mutate(wdomestic = domestic * qw,
                     wfuel = fuel * qw,
@@ -173,7 +174,7 @@ We note that over the period, cars seem to have got less expensive, averaging at
 # TODO: Squeeze the latex table
 # TODO: Add segment dummies?
 
-X <- glue("year", "horsepower", "fuel", "width","height", "domestic", "year", 
+X <- glue("year", "horsepower", "fuel", "width", "height", "domestic", "year", 
           "country1", "country2", "country3", "country4", .sep = "+")
 
 formula <- glue("log(price) ~", X)
@@ -184,7 +185,7 @@ lm.fit <- lm(formula, data = df)
 fe_formula <- glue("log(price) ~", X, "factor(co)", .sep = "+")
 fe.fit <- lm(fe_formula, data = df)
 
-stargazer(lm.fit, fe.fit, type = "text", omit = "factor")
+# Create table 2 further down
 ```
 
 
@@ -263,8 +264,9 @@ df <- df %>% mutate(ln_dmshare = log(mshare) - log(oshare))
 
 ```{r}
 # Adds price to the X
-X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", "year", .sep = "+")
-X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
+X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", "year",
+          "country1", "country2", "country3", "country4", .sep = "+")
+X_fe <- glue(X, "factor(co)", .sep = "+")
 
 formula <- glue("ln_dmshare ~", X)
 fe_formula <- glue("ln_dmshare ~", X_fe, "factor(co)", .sep = "+")
@@ -305,8 +307,8 @@ df <- df %>% mutate(ln_mshare_s = log(mshare_s))
 
 # Adds ln_mshare_s to the X
 X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", 
-          "year", "ln_mshare_s", .sep = "+")
-X_fe <- glue(X, "country1", "country2", "country3", "country4", .sep = "+")
+          "year", "ln_mshare_s","country1", "country2", "country3", "country4", .sep = "+")
+X_fe <- glue(X, "factor(co)", .sep = "+")
 
 formula <- glue("ln_dmshare ~", X)
 lm.nest <- lm(formula, data = df)
@@ -316,17 +318,38 @@ fe.nest <- lm(fe_formula, data = df)
 
 ```{r}
 # TODO: again, do what elasticfity do we calculate?
+alpha_1 <- lm.logit[["coefficients"]][["price"]]
+
+
 alpha_2 <- lm.nest[["coefficients"]][["price"]]
 sigma <- lm.nest[["coefficients"]][["ln_mshare_s"]]
 
+alpha_1_fe <- fe.logit[["coefficients"]][["price"]]
+df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
+
+alpha_2_fe <- fe.nest[["coefficients"]][["price"]]
+sigma_fe <- lm.nest[["coefficients"]][["ln_mshare_s"]]
+
+df <- df %>% mutate(own_price_elasticity = alpha_1 * (1 - mshare)*price)
 df <- df %>% mutate(e_jj_nl = alpha_2 * (1/(1-sigma) - (sigma/(1-sigma)) * mshare_s  - mshare)*price)
+df <- df %>% mutate(own_price_elasticity_fe = alpha_1_fe * (1 - mshare)*price)
+df <- df %>% mutate(e_jj_nl_fe = alpha_2_fe * (1/(1-sigma_fe) - (sigma_fe/(1-sigma_fe)) * mshare_s  - mshare)*price)
+
+
 
 # TODO: fix output
-Table_4 <- df %>% select(e_jj_nl,own_price_elasticity) %>%
+Table_4 <- df %>% 
+  select(own_price_elasticity, own_price_elasticity_fe, e_jj_nl,e_jj_nl_fe) %>%
   map(function(x) summary_stats(x)) %>% summary_table()
 
 xtable(Table_4, caption = "Aggregated elasticity estimates")
 ```
+
+```{r}
+Table2 <- stargazer(lm.fit, fe.fit, lm.logit, fe.logit, lm.nest, fe.nest,
+                    type = "text", omit = "factor", column.sep.width = "2pt", font.size = "footnotesize")
+```
+
 
 ```{r}
 # Calculates average average elasticity within nest for each firm
