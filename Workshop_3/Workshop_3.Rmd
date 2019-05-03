@@ -361,13 +361,13 @@ df <- df %>% group_by(firm) %>% mutate(avg_e_jj_nl = mean(e_jj_nl)) %>% ungroup(
 
 ```{r}
 
-Figure_data <- df %>% rename("Baseline" = e_jj_nl, "Model F.E" = e_jj_nl_fe) %>% gather(key = "Specification", value = "value", Baseline, "Model F.E") %>% group_by(firm, Specification) %>% summarise("mean_el" = abs(mean(value)), "se" = sd(value)/sqrt(n()))
+Figure_data <- df %>% rename("Baseline" = own_price_elasticity, "Model F.E" = own_price_elasticity_fe) %>% gather(key = "Specification", value = "value", Baseline, "Model F.E") %>% group_by(firm, Specification) %>% summarise("mean_el" = abs(mean(value)), "se" = sd(value)/sqrt(n()))
 
 
   Figure_data %>% ggplot(aes(x = as.factor(reorder(firm, -mean_el)), y = mean_el, fill = Specification)) +
   geom_bar(stat="identity", position = "dodge")  +
   theme_economist() + scale_fill_manual(values = alpha(c("#336666", "#8abbd0"), 1)) +
-  labs(title = "Nested logit absolute elasticities", 
+  labs(title = "Logit absolute elasticities", 
        y = "(Absolute) Elasticities", x = "Firm ID", tag = "Graph 2",
        caption = "Baseline corresponds to estimates from column 5, Table 2, Model.F.E. corresponds to column 6. 
        Error bars show 95% CI.") + 
@@ -375,7 +375,7 @@ Figure_data <- df %>% rename("Baseline" = e_jj_nl, "Model F.E" = e_jj_nl_fe) %>%
                  position=position_dodge(.9))
 ```
 ```{r}
-ggsave("nested_elast.png", height = 16, width = 20, units = "cm")
+ggsave("elast.png", height = 16, width = 20, units = "cm")
 
 ```
 
@@ -418,15 +418,16 @@ df <- df %>% mutate(pderiv = alpha_2_fe * mshare*((1/(1-sigma_fe))-(sigma_fe/(1-
 
 ```
 ```{r}
-# firm level averages
+# firm level averages (pre merger)
 df <- df %>% group_by(firm) %>% mutate(avg_markup = mean(markup),
                                  avg_mc = mean(mc),
                                  avg_lerner = mean(lerner),
                                  avg_price = mean(price)) %>% ungroup()
 
-# Table for question 7. Pre merger descriptives. 
+# Table for question 7. Pre merger descriptives. Table_5
 pricing_table <- df %>% select(firm, avg_price, avg_mc, avg_markup, avg_lerner) %>% 
   distinct(firm, .keep_all = TRUE) %>% arrange(-avg_price)
+Table_5 <- pricing_table
 
 
 ```
@@ -436,15 +437,7 @@ The results are obviously meaningful from an economic point of view insofar as t
 
 The lerner index has another economic meaning, namely that the absolute value of the inverse lerner is the price elasticity of demand facing each firm. Derivation?
 
-```{r}
-# For fun =)
-df %>% ggplot(aes(x = price, y = markup, color = as.factor(segment))) +
-  geom_point(alpha = 0.2)
 
-# subtracting a fixed fee such as the minimum markup (about 3), the relationship looks very different
-df %>% ggplot(aes(x = price, y = (markup)/(price), color = as.factor(segment))) +
-  geom_point(alpha = 0.2)
-```
 
 # 8 Merger
 
@@ -478,7 +471,12 @@ dataframe <- dataframe %>% mutate(mc         = case_when(firm == 26 & country ==
 dataframe <- dataframe %>% group_by(firm) %>% mutate(avg_markup_new = mean(markup_new),
                                  avg_mc_new = mean(mc),
                                  avg_lerner_new = mean(lerner_new),
-                                 avg_price_new = mean(price_new)) %>% ungroup()
+                                 avg_price_new = mean(price_new, na.rm = TRUE)) %>% ungroup()
+
+dataframe <- dataframe %>% group_by(firm) %>% mutate(AVG_markup_new = mean(markup_new[year == 1998]),
+                                 AVG_mc_new = mean(mc[year == 1998]),
+                                 AVG_lerner_new = mean(lerner_new[year == 1998]),
+                                 AVG_price_new = mean(price_new[year == 1998], na.rm = TRUE)) %>% ungroup()
 
 
   return(dataframe)
@@ -491,24 +489,10 @@ merger_df <- post_merger_df(df, 1)
 
 
 ```{r}
-merger_df %>% filter(year == 1998, country == 3) %>%
-  select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% summary_table()
+#merger_df %>% filter(year == 1998, country == 3) %>%
+ # select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% summary_table()
 ```
 ## Post merger
-```{r}
-# Compare per-merger and post-merger prices: 
-# combine with table from 7
-pricing_table_new <- merger_df %>% select(firm, avg_price_new) %>% 
-  distinct(firm, .keep_all = TRUE)
-
-Table_5 <- full_join(pricing_table, pricing_table_new) %>% 
-  mutate("Delta price (p.mille)" = 1000 * (avg_price_new/avg_price-1)) %>%
-  select(firm, avg_price, avg_price_new, "Delta price (p.mille)", everything()) %>% 
-  rename("Pre price" = avg_price, "Post price" = avg_price_new) %>% 
-  column_to_rownames(var = "firm") %>% 
-  xtable(digits = 2, caption = "Firm level price info")
-```
-
 
 
 ```{r}
@@ -546,7 +530,7 @@ for (s in 1:5) {
 
 price_change_table <- rbind(ger_table, gm_table, vw_table, segment_price_change) %>% select(Variable, Mean, name) %>% spread(key = Variable, value = Mean) %>% select(-dprice) 
 
-price_change_table
+price_change_table # USed for graphs
 ```
 
 
@@ -560,7 +544,7 @@ merger_df_9 <- post_merger_df(df, 0.8)
 ```
 
 ```{r}
-merger_df_9 %>% filter(year == 1998, country == 3) %>%
+merger_df_9 %>% filter(year == 1998, country == 3) %>% 
   select(mshare_s, mshare_s1) %>% map(function(x) summary_stats(x)) %>% summary_table()
 ```
 
@@ -595,6 +579,29 @@ price_change_table_2 <- rbind(ger_table, gm_table, vw_table, segment_price_chang
 price_change_table_2 <- price_change_table_2 %>% rename(efficient_price = price_new)
 ```
 
+# Table 5 related
+```{r}
+# Compare per-merger and post-merger prices: 
+# combine with table from 7
+pricing_table <- df %>% dplyr::select(firm, price, year) %>% group_by(firm)%>% mutate(AVG_price = mean(price[year == 1998])) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
+
+pricing_table_new <- merger_df %>% select(firm, AVG_price_new) %>% 
+  distinct(firm, .keep_all = TRUE)
+
+pricing_table_new_eff <- merger_df_9 %>% rename(eff_price = AVG_price_new) %>% select(firm, eff_price) %>% distinct(firm, .keep_all = TRUE)
+
+Table_5 <- full_join(pricing_table, pricing_table_new) %>% full_join(pricing_table_new_eff) %>% 
+  mutate("Delta price (p.mille)" = 1000 * (avg_price_new/avg_price-1),
+         "Delta price (efficient) (p.mille)"  = 1000 * (eff_price/avg_price-1)) %>%
+  select(firm, avg_price, avg_price_new, eff_price, "Delta price (p.mille)", "Delta price (efficient) (p.mille)", everything()) %>% 
+  rename("Pre price" = avg_price, "Post price" = avg_price_new) %>% 
+  column_to_rownames(var = "firm") 
+
+xtable(Table_5)
+```
+
+
+# graph related:
 ```{r}
 # Merge the two price change tables
 pre_post_table <- full_join(price_change_table, price_change_table_2)
@@ -618,7 +625,7 @@ Another aspect to be considered is the number of nests. We believe that a model 
 
 Taxes varying across nation? or is it captured by country dummies?
 
-
+# Graphs
 ```{r}
 pre_post_table <- pre_post_table %>% select(-treatment) %>%  
   spread(price_type, price) 
