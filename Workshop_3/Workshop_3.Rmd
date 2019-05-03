@@ -650,14 +650,14 @@ graph_table %>%
   geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.85, y = graph_table$price, label = as.character(graph_table$name)) +
-  labs(title = "Merger effects on prices", y = "Average price",
-       tag = "Graph 3") +
+  labs(title = "Merger effects on prices", subtitle = "Within Germany", y = "Average price",
+       tag = "Graph 3", caption("VW is the post merger VW, including it's GM part")) +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
          values =c("#336666"="#336666","#e3120b"="#e3120b"), 
          labels = c("Not cost reducing","Cost reducing")) +
   theme(plot.tag.position = "bottom") +
-  scale_y_continuous(limits=c(0, 40))
+  scale_y_continuous(limits=c(10, 20))
 
   
 ```
@@ -680,7 +680,8 @@ graph_table %>%
   geom_point(aes(x = as.factor("Post merger"), y = efficient_price), size = 3) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   annotate("text", x = 0.8, y = graph_table$price, label = as.character(graph_table$name)) +
-  labs(title = "Merger effects on prices", y = "Average price",
+  labs(title = "Merger effects on prices", 
+       subtitle = "Within Germany", y = "Average price",
        tag = "Graph 4") +
   scale_x_discrete(name ="", limits=c("Pre merger","Post merger")) +
   scale_colour_manual(guide = "legend", name = "Merger type:",
