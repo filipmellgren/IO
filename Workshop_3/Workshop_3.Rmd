@@ -410,7 +410,7 @@ Do you think your results are economically meaningful? Explain and discuss.
 ```{r}
 # TODO: Note that markups are negative
 # markups
-df <- df %>% mutate(pderiv = alpha_2 * mshare*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s-mshare),
+df <- df %>% mutate(pderiv = alpha_2_fe * mshare*((1/(1-sigma_fe))-(sigma_fe/(1-sigma_fe))*mshare_s-mshare),
                     markup = -mshare/pderiv, # "-" to get the right sign
                     mc = price - markup,
                     lerner = markup/price)
@@ -470,7 +470,7 @@ dataframe <- dataframe %>% group_by(segment_new, yearcountry) %>%
 # TODO: double check we should be using alpha_2 and not something else
 dataframe <- dataframe %>% mutate(mc         = case_when(firm == 26 & country == 3 & year >= 1998 ~ mc * ratio_mc,
                                                          TRUE ~ mc),
-                                  pderiv_new = alpha_2 * mshare1*((1/(1-sigma))-(sigma/(1-sigma))*mshare_s1-mshare1),
+                                  pderiv_new = alpha_2_fe * mshare1*((1/(1-sigma_fe))-(sigma_fe/(1-sigma_fe))*mshare_s1-mshare1),
                                   markup_new = -(mshare1 / pderiv_new),
                                   price_new  = mc + markup_new,
                                   lerner_new = markup_new / price_new,
