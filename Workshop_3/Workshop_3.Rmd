@@ -513,17 +513,17 @@ Table_5 <- full_join(pricing_table, pricing_table_new) %>%
 
 ```{r}
 merger_df <- merger_df %>% mutate(wprice_new = price_new * qw,
-                                  dwprice = wprice_new / wprice - 1)
+                                  wdprice = dprice * qw)
 ger_table <- merger_df %>% filter(year == 1998, country == 3, !is.na(price_new)) %>% drop_na() %>% 
-  select(price, price_new, dprice, wprice, wprice_new, dwprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
+  select(price, price_new, dprice, wprice, wprice_new, wdprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
 
 # GM
-gm_table <- merger_df %>% filter(year == 1998, country == 3, firm == 15) %>% #drop_na() %>% 
-  select(price, price_new, dprice, wprice, wprice_new, dwprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
+gm_table <- merger_df %>% filter(year == 1998, country == 3, firm == 15, !is.na(price_new)) %>% #drop_na() %>% 
+  select(price, price_new, dprice, wprice, wprice_new, wdprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
 
 # VW
-vw_table <- merger_df %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
-  select(price, price_new, dprice, wprice, wprice_new, dwprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
+vw_table <- merger_df %>% filter(year == 1998, country == 3, firm == 26, !is.na(price_new)) %>% drop_na() %>% 
+  select(price, price_new, dprice, wprice, wprice_new, wdprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
 
 # Segments
 segment_price_change <- tibble()
