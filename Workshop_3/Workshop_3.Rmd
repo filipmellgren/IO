@@ -322,7 +322,6 @@ fe.nest <- lm(fe_formula, data = df)
 ```
 
 ```{r}
-# TODO: again, do what elasticfity do we calculate?
 alpha_1 <- lm.logit[["coefficients"]][["price"]]
 
 
@@ -342,7 +341,6 @@ df <- df %>% mutate(e_jj_nl_fe = alpha_2_fe * (1/(1-sigma_fe) - (sigma_fe/(1-sig
 
 
 
-# TODO: fix output
 Table_4 <- df %>% 
   select(own_price_elasticity, own_price_elasticity_fe, e_jj_nl,e_jj_nl_fe) %>%
   map(function(x) summary_stats(x)) %>% summary_table()
@@ -371,8 +369,8 @@ Figure_data <- df %>% rename("Baseline" = e_jj_nl, "Model F.E" = e_jj_nl_fe) %>%
   theme_economist() + scale_fill_manual(values = alpha(c("#336666", "#8abbd0"), 1)) +
   labs(title = "Nested logit absolute elasticities", 
        y = "(Absolute) Elasticities", x = "Firm ID", tag = "Graph 2",
-       caption = "Baseline corresponds to estimates from column 5, Table 2, Model.F.E. correpsonds to column 6. 
-       Bars show two standard errors of the estimate.") + 
+       caption = "Baseline corresponds to estimates from column 5, Table 2, Model.F.E. corresponds to column 6. 
+       Error bars show 95% CI.") + 
     geom_errorbar(aes(ymin=mean_el-2*se, ymax=mean_el +2*se), width=.2,
                  position=position_dodge(.9))
 ```
