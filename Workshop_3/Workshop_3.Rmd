@@ -591,12 +591,20 @@ price_change_table_2 <- price_change_table_2 %>% rename(efficient_price = price_
 ```{r}
 # Compare per-merger and post-merger prices: 
 # combine with table from 7
+pricing_table <- df %>% dplyr::select(firm, price, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price)) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
+
+pricing_table_new <- merger_df %>% dplyr::select(firm, price_new, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price_new)) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
+
+pricing_table_eff <- merger_df_9 %>% dplyr::select(firm, price_new, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price_new[year == 1998])) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
+
+## old
 pricing_table <- df %>% dplyr::select(firm, price, year) %>% group_by(firm)%>% mutate(AVG_price = mean(price[year == 1998])) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
 
 pricing_table_new <- merger_df %>% select(firm, AVG_price_new) %>% 
   distinct(firm, .keep_all = TRUE)
 
 pricing_table_new_eff <- merger_df_9 %>% rename(eff_price = AVG_price_new) %>% select(firm, eff_price) %>% distinct(firm, .keep_all = TRUE)
+## old ends
 
 Table_5 <- full_join(pricing_table, pricing_table_new) %>% full_join(pricing_table_new_eff) %>% 
   mutate("Delta price (p.mille)" = 1000 * (AVG_price_new/AVG_price-1),
