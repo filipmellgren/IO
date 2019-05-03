@@ -123,7 +123,7 @@ tmp_table_se <- tmp_table[seq(1, nrow(tmp_table), 2), ] %>% mutate(All = word(Al
                                                    UK = word(UK,2))
 # Create a table for the mins and maxes
 minmax_table <- df %>%
-  select(country, wdomestic, qu, wprice, wprinc, wsegment, wweight, wwidth, wheight, whorsepower, wfuel,  pop, year) %>% 
+  select(country, domestic, qu, price, princ, segment, weight, width, height, horsepower, fuel,  pop, year) %>% 
   mutate(pop = pop/1000000) %>%
   map(function(x) summary_stats(x)) %>% summary_table() %>% 
   select(Variable, Min., Max.) %>% filter(Variable != "country")
@@ -179,7 +179,7 @@ We note that over the period, cars seem to have got less expensive, averaging at
 # TODO: Squeeze the latex table
 # TODO: Add segment dummies?
 
-X <- glue("year", "horsepower", "fuel", "width", "height", "domestic", "year", 
+X <- glue("year", "horsepower", "fuel", "width", "weight", "height", "domestic", "year", 
           "country1", "country2", "country3", "country4", .sep = "+")
 
 formula <- glue("log(price) ~", X)
@@ -269,7 +269,7 @@ df <- df %>% mutate(ln_dmshare = log(mshare) - log(oshare))
 
 ```{r}
 # Adds price to the X
-X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", "year",
+X <- glue("price", "year", "horsepower", "fuel","weight", "width","height", "domestic", "year",
           "country1", "country2", "country3", "country4", .sep = "+")
 X_fe <- glue(X, "factor(co)", .sep = "+")
 
@@ -311,13 +311,13 @@ df <- df %>% mutate(ln_mshare_s = log(mshare_s))
 
 
 # Adds ln_mshare_s to the X
-X <- glue("price", "year", "horsepower", "fuel", "width","height", "domestic", 
+X <- glue("price", "year", "horsepower", "fuel","weight", "width","height", "domestic", 
           "year", "ln_mshare_s","country1", "country2", "country3", "country4", .sep = "+")
 X_fe <- glue(X, "factor(co)", .sep = "+")
 
-formula <- glue("ln_mshare ~", X)
+formula <- glue("ln_dmshare ~", X)
 lm.nest <- lm(formula, data = df)
-fe_formula <- glue("ln_mshare ~", X_fe)
+fe_formula <- glue("ln_dmshare ~", X_fe)
 fe.nest <- lm(fe_formula, data = df)
 ```
 
