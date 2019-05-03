@@ -455,12 +455,13 @@ post_merger_df <- function(dataframe, ratio_mc){
            mshare1 = qu_new/msize)
   
 dataframe <- dataframe %>% group_by(segment_new, yearcountry) %>% 
-  mutate(tot_s1 = sum(qu_new), 
-         mshare_s1 = qu_new / tot_s1) %>% ungroup()
+  mutate(tot_s1 = sum(qu_new)) %>% ungroup()
+
+dataframe <-dataframe %>% mutate(mshare_s1 = qu_new / tot_s1)
+         
 
 # TODO: double check we should be using alpha_2 and not something else
-dataframe <- dataframe %>% mutate(mc         = case_when(firm == 26 & country == 3 & year >= 1998 ~ mc * ratio_mc,
-                                                         TRUE ~ mc),
+dataframe <- dataframe %>% mutate(mc = case_when(firm == 26 & country == 3 & year >= 1998 ~ mc * ratio_mc, TRUE ~ mc),
                                   pderiv_new = alpha_2_fe * mshare1*((1/(1-sigma_fe))-(sigma_fe/(1-sigma_fe))*mshare_s1-mshare1),
                                   markup_new = -(mshare1 / pderiv_new),
                                   price_new  = mc + markup_new,
@@ -591,11 +592,11 @@ price_change_table_2 <- price_change_table_2 %>% rename(efficient_price = price_
 ```{r}
 # Compare per-merger and post-merger prices: 
 # combine with table from 7
-pricing_table <- df %>% dplyr::select(firm, price, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price)) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
+pricing_table <- df %>% dplyr::select(firm, price, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price, na.rm = TRUE)) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
 
-pricing_table_new <- merger_df %>% dplyr::select(firm, price_new, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price_new)) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
+pricing_table_new <- merger_df %>% dplyr::select(firm, price_new, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price_new, na.rm = TRUE)) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
 
-pricing_table_eff <- merger_df_9 %>% dplyr::select(firm, price_new, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price_new[year == 1998])) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
+pricing_table_eff <- merger_df_9 %>% dplyr::select(firm, price_new, year) %>% filter(year == 1998) %>% group_by(firm)%>% mutate(AVG_price = mean(price_new, na.rm = TRUE)) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
 
 ## old
 pricing_table <- df %>% dplyr::select(firm, price, year) %>% group_by(firm)%>% mutate(AVG_price = mean(price[year == 1998])) %>% distinct(firm, .keep_all = TRUE) %>% ungroup() %>% select(-year)
