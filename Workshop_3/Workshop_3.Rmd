@@ -499,15 +499,15 @@ merger_df <- post_merger_df(df, 1)
 merger_df <- merger_df %>% mutate(wprice_new = price_new * qw,
                                   wdprice = dprice * qw)
 ger_table <- merger_df %>% filter(year == 1998, country == 3, !is.na(price_new)) %>% drop_na() %>% 
-  select(price, price_new, dprice, wprice, wprice_new, wdprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
 
 # GM
 gm_table <- merger_df %>% filter(year == 1998, country == 3, firm == 15, !is.na(price_new)) %>% #drop_na() %>% 
-  select(price, price_new, dprice, wprice, wprice_new, wdprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
 
 # VW
 vw_table <- merger_df %>% filter(year == 1998, country == 3, firm == 26, !is.na(price_new)) %>% drop_na() %>% 
-  select(price, price_new, dprice, wprice, wprice_new, wdprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
+  select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
 
 # Segments
 segment_price_change <- tibble()
@@ -549,15 +549,15 @@ merger_df_9 %>% filter(year == 1998, country == 3) %>%
 ```
 
 ```{r}
-ger_table <- merger_df_9 %>% filter(year == 1998, country == 3) %>% drop_na() %>% 
+ger_table <- merger_df_9 %>% filter(year == 1998, country == 3, !is.na(price_new)) %>% drop_na() %>% 
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "ger")
 
 # GM
-gm_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 15) %>% # Can't drop_na()
+gm_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 15, !is.na(price_new)) %>% # Can't drop_na()
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name = "gm")
 
 # VW
-vw_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 26) %>% drop_na() %>% 
+vw_table <- merger_df_9 %>% filter(year == 1998, country == 3, firm == 26, !is.na(price_new)) %>% drop_na() %>% 
   select(price, price_new, dprice) %>% map(function(x) summary_stats(x)) %>% summary_table() %>% cbind(name ="vw")
 
 # Segments
@@ -566,7 +566,15 @@ for (s in 1:5) {
   segment_price_change2 <- 
     rbind(segment_price_change2, merger_df_9 %>% 
             filter(year == 1998, segment == s) %>% drop_na() %>% 
-            select(price, price_new, dprice) %>% map(function(x) 
+            select(price) %>% map(function(x) 
+              summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)),
+          merger_df_9 %>% 
+            filter(year == 1998, segment_new == s) %>% drop_na() %>% 
+            select(price_new) %>% map(function(x) 
+              summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)),
+          merger_df_9 %>% 
+            filter(year == 1998, segment == s, segment_new == s) %>% drop_na() %>% 
+            select(dprice) %>% map(function(x) 
               summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)))
 }
 
@@ -591,10 +599,10 @@ pricing_table_new <- merger_df %>% select(firm, AVG_price_new) %>%
 pricing_table_new_eff <- merger_df_9 %>% rename(eff_price = AVG_price_new) %>% select(firm, eff_price) %>% distinct(firm, .keep_all = TRUE)
 
 Table_5 <- full_join(pricing_table, pricing_table_new) %>% full_join(pricing_table_new_eff) %>% 
-  mutate("Delta price (p.mille)" = 1000 * (avg_price_new/avg_price-1),
-         "Delta price (efficient) (p.mille)"  = 1000 * (eff_price/avg_price-1)) %>%
-  select(firm, avg_price, avg_price_new, eff_price, "Delta price (p.mille)", "Delta price (efficient) (p.mille)", everything()) %>% 
-  rename("Pre price" = avg_price, "Post price" = avg_price_new) %>% 
+  mutate("Delta price (p.mille)" = 1000 * (AVG_price_new/AVG_price-1),
+         "Delta price (efficient) (p.mille)"  = 1000 * (eff_price/AVG_price-1)) %>%
+  select(firm, AVG_price, AVG_price_new, eff_price, "Delta price (p.mille)", "Delta price (efficient) (p.mille)", everything()) %>% 
+  rename("Pre price" = AVG_price, "Post price" = AVG_price_new) %>% 
   column_to_rownames(var = "firm") 
 
 xtable(Table_5)
