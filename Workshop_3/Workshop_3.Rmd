@@ -531,7 +531,15 @@ for (s in 1:5) {
   segment_price_change <- 
     rbind(segment_price_change, merger_df %>% 
             filter(year == 1998, segment == s) %>% drop_na() %>% 
-            select(price, price_new, dprice) %>% map(function(x) 
+            select(price) %>% map(function(x) 
+              summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)),
+          merger_df %>% 
+            filter(year == 1998, segment_new == s) %>% drop_na() %>% 
+            select(price_new) %>% map(function(x) 
+              summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)),
+          merger_df %>% 
+            filter(year == 1998, segment == s, segment_new == s) %>% drop_na() %>% 
+            select(dprice) %>% map(function(x) 
               summary_stats(x)) %>% summary_table() %>% cbind(name =glue("segment",s)))
 }
 
