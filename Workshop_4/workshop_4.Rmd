@@ -8,9 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-
-```{r cars}
+```{r}
 library(tidyverse)
 library(rio)
 library(readxl)
@@ -24,11 +22,15 @@ library(reshape2)
 library(xtable)
 #library(plm)
 library(zoo)
-#setwd("C:/Users/chris/Dropbox/02 SSE/5321 IO/Empirical workshop 4")
+
+```
+
+```{r}
 df <- import("jec.dta")
-br1 = 166
-br2 = br1 + 14
-br3 = 328 - 5
+br1 = 28         # w28 1880
+br2 = 11 + 3*52  # w11 1883
+br3 = 26 + 3*52  # w26 1883
+br4 = 12 + 6*52  # w12 1886
 df <- df %>% rename(week = WEEK,
                     month = MONTH,
                     lakes = LAKES,
@@ -36,32 +38,62 @@ df <- df %>% rename(week = WEEK,
                     po = PO,
                     gr = GR,
                     pn = PN)
-df <- df %>% mutate(gtr   = between(week,28,br1),
-                    nyc   = between(week,br1+1,br2),
-                    cain  = between(week,br2+1,br3),
-                    caout = between(week,br3,328))
-df <- df %>% mutate(era = case_when(
-  between(week,28,br1)    ~ 1,
-  between(week,br1+1,br2) ~ 2,
-  between(week,br2+1,br3) ~ 3,
-  between(week,br3,328)   ~ 4))
+df <- df %>% mutate(coll   = (po+pn)/2,
+                    yrexact=(week/52)+1880,
+                    year = floor(yrexact),
+                    wy = ifelse(week %% 52 == 0, 52, week %% 52),
+                    era   = case_when(
+                      week < br1                ~ 1/5,
+                      between(week, br1,   br2) ~ 2/5,
+                      between(week, br2+1, br3) ~ 3/5,
+                      between(week, br3+1, br4) ~ 4/5,
+                      between(week, br4+1, 328) ~ 5/5),
+                    gtr   = between(week, br1, br2),
+                    nyc   = between(week, br2+1, br3),
+                    cain  = between(week, br3+1, br4),
+                    caout = between(week, br4+1,   328))
+count(df,pn-po)
+```
 
-qd <- lm(log(tqg) ~ log(gr) + lakes, data = df)                         # qty   = f(price, lakes)
-qs <- lm(log(gr) ~ log(tqg) + po + gtr + nyc + cain + caout, data = df) # price = f(qty, lakes, era)
+```{r}
+ggplot(data=df, aes(x=yrexact, y=po)) + geom_point(stat="identity")
+ggplot(data=df, aes(x=yrexact, y=lakes)) + geom_point(stat="identity")
+ggplot(data=df, aes(x=yrexact, y=po)) + geom_line(stat="identity")
+ggplot(data=df, aes(x=yrexact, y=gr)) + geom_line(stat="identity")
+ggplot(data=df, aes(x=yrexact, y=pn)) + geom_line(stat="identity")
 
-ggplot(data=df, aes(x=week, y=po)) + geom_line(stat="identity")
-ggplot(data=df, aes(x=week, y=gr)) + geom_line(stat="identity")
-ggplot(data=df, aes(x=week, y=pn)) + geom_line(stat="identity")
-# To find out info about theta, specific the supply equation. Summarise MC by weights of market share, 
+library(reshape2)
+#long <- df %>% select(yrexact,po,gr,pn, era) %>% melt(id="year")
+ggplot(data=(df %>% select(yrexact,coll,gr,era) %>% melt(id="yrexact")), 
+       aes(x=yrexact, y=value, colour = variable)) + geom_point()
+ # To find out info about theta, specific the supply equation. Summarise MC by weights of market share, 
 # 
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+qd <- lm(log(tqg) ~ log(gr) + lakes + factor(month), data = df) # qty = f(price, lakes)
+qs <- lm(log(gr) ~ log(tqg) + po + factor(era) + factor(month), data = df) # price = f(qty, lakes, era)
+qscoeff <- summary(qs)[["coefficients"]]
+qdcoeff <- summary(qd)[["coefficients"]]
 ```
+
+
+## Overcoming endogeneity - IV specifications of supply and demand
+Demand equation: qty = f(price, lakes, month). To overcome endogeneity of price, IV candidates are supply shifter: collusion and firm entry. 
+```{r}
+iv_qd <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
+               | po + factor(era) + lakes + factor(month), data = df)
+summary(iv_qd, diagnostics = TRUE)
+```
+
+Inverse supply equation: p = f(qty, collusion, entry, month). To overcome endogeneity of qty, IV candidate is lakes. 
+```{r}
+iv_qs <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month) 
+              | lakes + po + factor(era) + factor(month), data = df)
+summary(iv_qs, diagnostics = TRUE)
+
+```
+
+
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
