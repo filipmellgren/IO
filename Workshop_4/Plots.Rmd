@@ -4,6 +4,10 @@ author: "Filip Mellgren"
 date: '2019-05-07'
 output: html_document
 ---
+```{r}
+library(tidyverse)
+library(xtable)
+```
 
 # Q1 summary statistics
 Show and discuss summary statistics of the data. Plot and discuss the evolution of the index of prices (GR), the total quantity recorded shipped by the JEC (T GQ), and the variable when the railway magazine reported periods of price war (P O).
@@ -31,13 +35,18 @@ collusion_phases$end <- replace_na(collusion_phases$end, max(df$year))
 # Create the plot:
 ggplot() + 
   geom_rect(data = collusion_phases, aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf, fill = "red"), alpha = 0.4) +
-  geom_line(data = df, aes(year,GR)) +
+  geom_line(data = df, aes(year,GR), size = 0.75) +
   theme_economist() + scale_fill_economist() + scale_color_economist() +
   theme(legend.position = "none") +
   labs(y = "Price of grain in dollars per 100 lbs", x = "Year", title = "Collusive periods show higher prices", caption = "Shaded periods indicate periods of collusion according to Railway Review.",
        tag = "Graph 1")
 
 ```
+```{r}
+ggsave("grain_price.png", height = 14, width = 21, units = "cm")
+```
+
+
 
 ## Quantity recorded:
 ```{r}
@@ -45,9 +54,13 @@ ggplot() +
   geom_rect(data = collusion_phases, aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf, fill = "red"), alpha = 0.4) +
   theme_economist() + scale_fill_economist() + scale_color_economist()+
   theme(legend.position = "none") +
-  geom_line(data = df, aes(x = year, y = TQG)) +
-  labs(y = "Quantity of grain shipped (in tonnes)", x = "Year", tag = "Graph 2",
+  geom_line(data = df, aes(x = year, y = TQG), size = 0.75) +
+  labs(y = "Quantity of grain shipped (in tones)", x = "Year", tag = "Graph 2",
        title = "Quantity decreases under collusive periods.", caption = "Shaded periods indicate periods of collusion according to Railway Review.")
+```
+
+```{r}
+ggsave("grain_quant.png", height = 14, width = 21, units = "cm")
 ```
 
 ## Summary statistics
@@ -73,6 +86,8 @@ summary_table<- function(summary){
 descriptive_table <- df %>%
   select(TQG, GR, PO, PN, LAKES) %>% 
   map(function(x) summary_stats(x)) %>% summary_table()
+
+xtable(descriptive_table)
 ```
 
 
