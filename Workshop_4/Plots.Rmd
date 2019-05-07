@@ -1,0 +1,78 @@
+---
+title: "Plots workshop 4"
+author: "Filip Mellgren"
+date: '2019-05-07'
+output: html_document
+---
+
+# Q1 summary statistics
+Show and discuss summary statistics of the data. Plot and discuss the evolution of the index of prices (GR), the total quantity recorded shipped by the JEC (T GQ), and the variable when the railway magazine reported periods of price war (P O).
+
+## Prices and collusive periods:
+```{r}
+# Create year variable along with variables necessary for the graph:
+df <- df %>% mutate(year = (WEEK + 51)/52 + 1879,
+                    start_PO = year*PO,
+                    end_PO = (-1)*year*(PO-1),
+                    start_PO = if_else(lag(start_PO) == 0, start_PO, 0),
+                    end_PO = if_else(lag(end_PO) == 0, end_PO, 0),
+                    start_PO = replace_na(start_PO, 1880))
+```
+
+```{r}
+# Need to put the start and stop dates in its own data frame
+start <-  c(df$start_PO)
+end <- c(df$end_PO)
+start <- start[start!= 0]
+end <- lead(end[end != 0])
+collusion_phases <- data.frame(start, end)
+collusion_phases$end <- replace_na(collusion_phases$end, max(df$year))
+
+# Create the plot:
+ggplot() + 
+  geom_rect(data = collusion_phases, aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf, fill = "red"), alpha = 0.4) +
+  geom_line(data = df, aes(year,GR)) +
+  theme_economist() + scale_fill_economist() + scale_color_economist() +
+  theme(legend.position = "none") +
+  labs(y = "Price of grain in dollars per 100 lbs", x = "Year", title = "Collusive periods show higher prices", caption = "Shaded periods indicate periods of collusion according to Railway Review.",
+       tag = "Graph 1")
+
+```
+
+## Quantity recorded:
+```{r}
+ggplot() +
+  geom_rect(data = collusion_phases, aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf, fill = "red"), alpha = 0.4) +
+  theme_economist() + scale_fill_economist() + scale_color_economist()+
+  theme(legend.position = "none") +
+  geom_line(data = df, aes(x = year, y = TQG)) +
+  labs(y = "Quantity of grain shipped (in tonnes)", x = "Year", tag = "Graph 2",
+       title = "Quantity decreases under collusive periods.", caption = "Shaded periods indicate periods of collusion according to Railway Review.")
+```
+
+## Summary statistics
+```{r}
+summary_stats <- function(x){
+  x <- as.matrix(x)
+  
+  summary <- rbind(mean(x, na.rm = TRUE), sd(x, na.rm = TRUE), min(x, na.rm = TRUE), 
+                   max(x, na.rm = TRUE))
+    return(summary)
+}
+
+# Takes above and turns it into a nice table
+summary_table<- function(summary){
+  summary <- as_tibble(summary) %>% t() %>% round(2) %>% as_tibble(rownames = "Variable") %>% rename ("Mean" = V1, "S.D." = V2, "Min." = V3, "Max." = V4)
+  return(summary)
+}
+```
+
+
+```{r}
+# Summary statistics to Q1.
+descriptive_table <- df %>%
+  select(TQG, GR, PO, PN, LAKES) %>% 
+  map(function(x) summary_stats(x)) %>% summary_table()
+```
+
+
