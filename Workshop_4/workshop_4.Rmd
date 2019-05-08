@@ -99,6 +99,23 @@ summary(iv.ps.pn, diagnostics = TRUE)
 stargazer(qd, ps.po, ps.pn, iv.qd.pn, iv.ps.po, iv.ps.pn, column.sep.width = "2pt", font.size = "footnotesize", type = "text")
 
 ```
+```{r}
+# Endogenous variables: log(TQG) and pn.
+# Excluded instruments: Lakes and po
+# First, do a manual first stage to check the new collusion variable:
+
+lm.Q8 <- lm(pn ~ factor(era) + factor(month) + lakes + po, data = df)
+summary(lm.Q8)
+
+iv.Q8 <- ivreg(log(gr) ~ log(tqg) + pn + factor(era) + factor(month) 
+              | lakes + po + factor(era) + factor(month), data = df)
+summary(iv.Q8, diagnostics = TRUE)
+
+# Theta would be:
+beta2 <-  0.558 # Coefficient before PO/PN. beta3 in Porter
+alpha1 <- -0.703 # Coefficient before log(gr), same as earlier
+theta <- alpha1/(exp(beta2)) -alpha1
+```
 
 
 
