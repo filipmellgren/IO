@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-```{r}
+```{r, include = FALSE}
 library(tidyverse)
 library(rio)
 library(readxl)
@@ -44,10 +44,10 @@ df <- df %>% mutate(coll   = (po+pn)/2,
                     wy = ifelse(week %% 52 == 0, 52, week %% 52),
                     era   = case_when(
                       week < br1                ~ 1/5,
-                      between(week, br1,   br2) ~ 2/5,
-                      between(week, br2+1, br3) ~ 3/5,
-                      between(week, br3+1, br4) ~ 4/5,
-                      between(week, br4+1, 328) ~ 5/5),
+                      between(week, br1,   br2-1) ~ 2/5,
+                      between(week, br2, br3-1) ~ 3/5,
+                      between(week, br3, br4-1) ~ 4/5,
+                      between(week, br4, 328) ~ 5/5),
                     gtr   = between(week, br1, br2),
                     nyc   = between(week, br2+1, br3),
                     cain  = between(week, br3+1, br4),
@@ -79,9 +79,9 @@ ps.pn.coeff <- summary(ps.pn)[["coefficients"]]
 Demand equation: qty = f(price, lakes, month). To overcome endogeneity of price, IV candidates are supply shifter: collusion and firm entry. 
 ```{r}
 iv.qd.po <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
-               | po + factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
+               | factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
 iv.qd.pn <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
-               | pn + factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
+               |  factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
 #iv_qd_sum <- summary(iv_qd, diagnostics = TRUE)
 ```
 
@@ -89,7 +89,7 @@ Inverse supply equation: p = f(qty, collusion, entry, month). To overcome endoge
 ```{r}
 iv.ps.po <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month) 
               | lakes + po + factor(era) + factor(month), data = df)
-iv.ps.pn <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month) 
+iv.ps.pn <- ivreg(log(gr) ~ log(tqg) + pn + factor(era) + factor(month) 
               | lakes + pn + factor(era) + factor(month), data = df)
 
 stargazer(qd, ps.po, ps.pn, iv.qd.po, iv.qd.pn, iv.ps.po, iv.ps.pn, type = "text")
