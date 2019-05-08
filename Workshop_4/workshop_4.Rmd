@@ -52,48 +52,47 @@ df <- df %>% mutate(coll   = (po+pn)/2,
                     nyc   = between(week, br2+1, br3),
                     cain  = between(week, br3+1, br4),
                     caout = between(week, br4+1,   328))
-count(df,pn-po)
+#count(df,pn-po)
 ```
 
 ```{r}
-ggplot(data=df, aes(x=yrexact, y=po)) + geom_point(stat="identity")
-ggplot(data=df, aes(x=yrexact, y=lakes)) + geom_point(stat="identity")
-ggplot(data=df, aes(x=yrexact, y=po)) + geom_line(stat="identity")
-ggplot(data=df, aes(x=yrexact, y=gr)) + geom_line(stat="identity")
-ggplot(data=df, aes(x=yrexact, y=pn)) + geom_line(stat="identity")
-
+#ggplot(data=df, aes(x=yrexact, y=gr)) + geom_line(stat="identity")
+# Scatter price vs qty (with different series for collusive periods, and perhaps different episodes (partial out lakes?))
 library(reshape2)
-#long <- df %>% select(yrexact,po,gr,pn, era) %>% melt(id="year")
 ggplot(data=(df %>% select(yrexact,coll,gr,era) %>% melt(id="yrexact")), 
        aes(x=yrexact, y=value, colour = variable)) + geom_point()
- # To find out info about theta, specific the supply equation. Summarise MC by weights of market share, 
-# 
+# To find out info about theta, specific the supply equation. Summarise MC by weights of market share, 
+ggplot(data=df, aes(x=tqg, y=gr+rnorm(1, mean = 0, sd = 0.01), colour=coll)) + geom_point() 
 ```
 
 ```{r}
-qd <- lm(log(tqg) ~ log(gr) + lakes + factor(month), data = df) # qty = f(price, lakes)
-qs <- lm(log(gr) ~ log(tqg) + po + factor(era) + factor(month), data = df) # price = f(qty, lakes, era)
-qscoeff <- summary(qs)[["coefficients"]]
-qdcoeff <- summary(qd)[["coefficients"]]
+qd    <- lm(log(tqg) ~ log(gr) + lakes + factor(month), data = df) # qty = f(price, lakes)
+ps.po <- lm(log(gr) ~ log(tqg) + po + factor(era) + factor(month), data = df) # price = f(qty, lakes, era)
+ps.pn <- lm(log(gr) ~ log(tqg) + pn + factor(era) + factor(month), data = df) # price = f(qty, lakes, era)
+qd.coeff    <- summary(qd)[["coefficients"]]
+ps.po.coeff <- summary(ps.po)[["coefficients"]]
+ps.pn.coeff <- summary(ps.pn)[["coefficients"]]
 ```
 
 
 ## Overcoming endogeneity - IV specifications of supply and demand
 Demand equation: qty = f(price, lakes, month). To overcome endogeneity of price, IV candidates are supply shifter: collusion and firm entry. 
 ```{r}
-iv_qd <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
+iv.qd.po <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
                | po + factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
-iv_qd_sum <- summary(iv_qd, diagnostics = TRUE)
+iv.qd.pn <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
+               | pn + factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
+#iv_qd_sum <- summary(iv_qd, diagnostics = TRUE)
 ```
 
 Inverse supply equation: p = f(qty, collusion, entry, month). To overcome endogeneity of qty, IV candidate is lakes. 
 ```{r}
-iv_qs <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month) 
+iv.ps.po <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month) 
               | lakes + po + factor(era) + factor(month), data = df)
-iv_qs_sum <- summary(iv_qs, diagnostics = TRUE) 
-#%>% stargazer()
-stargazer(iv_qs_sum, iv_qd_sum)
-stargazer(summary(qd)[["coefficients"]][,1], type = "text")
+iv.ps.pn <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month) 
+              | lakes + pn + factor(era) + factor(month), data = df)
+
+stargazer(qd, ps.po, ps.pn, iv.qd.po, iv.qd.pn, iv.ps.po, iv.ps.pn, type = "text")
 
 ```
 
