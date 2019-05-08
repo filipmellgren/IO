@@ -72,17 +72,18 @@ ps.pn <- lm(log(gr) ~ log(tqg) + pn + factor(era) + factor(month), data = df) # 
 qd.coeff    <- summary(qd)[["coefficients"]]
 ps.po.coeff <- summary(ps.po)[["coefficients"]]
 ps.pn.coeff <- summary(ps.pn)[["coefficients"]]
+
+
 ```
 
 
 ## Overcoming endogeneity - IV specifications of supply and demand
 Demand equation: qty = f(price, lakes, month). To overcome endogeneity of price, IV candidates are supply shifter: collusion and firm entry. 
 ```{r}
-iv.qd.po <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
+iv.qd <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
                | factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
-iv.qd.pn <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
-               |  factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
-#iv_qd_sum <- summary(iv_qd, diagnostics = TRUE)
+
+summary(iv.qd.pn, diagnostics = TRUE)
 ```
 
 Inverse supply equation: p = f(qty, collusion, entry, month). To overcome endogeneity of qty, IV candidate is lakes. 
@@ -92,7 +93,10 @@ iv.ps.po <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month)
 iv.ps.pn <- ivreg(log(gr) ~ log(tqg) + pn + factor(era) + factor(month) 
               | lakes + pn + factor(era) + factor(month), data = df)
 
-stargazer(qd, ps.po, ps.pn, iv.qd.po, iv.qd.pn, iv.ps.po, iv.ps.pn, type = "text")
+summary(iv.ps.po, diagnostics = TRUE)
+summary(iv.ps.pn, diagnostics = TRUE)
+
+stargazer(qd, ps.po, ps.pn, iv.qd.pn, iv.ps.po, iv.ps.pn, column.sep.width = "2pt", font.size = "footnotesize", type = "text")
 
 ```
 
