@@ -83,7 +83,7 @@ Demand equation: qty = f(price, lakes, month). To overcome endogeneity of price,
 iv.qd <- ivreg(log(tqg) ~ log(gr) + lakes + factor(month)
                | factor(era) + lakes + factor(month), data = df) # collusion and entry IV for price
 
-summary(iv.qd.pn, diagnostics = TRUE)
+summary(iv.qd, diagnostics = TRUE)
 ```
 
 Inverse supply equation: p = f(qty, collusion, entry, month). To overcome endogeneity of qty, IV candidate is lakes. 
@@ -116,6 +116,18 @@ beta2 <-  0.558 # Coefficient before PO/PN. beta3 in Porter
 alpha1 <- -0.703 # Coefficient before log(gr), same as earlier
 theta <- alpha1/(exp(beta2)) -alpha1
 ```
+```{r}
+# Reverse order:
+iv.Q8 <- ivreg(log(gr) ~ log(tqg) + po + factor(era) + factor(month) 
+              | lakes + pn + factor(era) + factor(month), data = df)
+summary(iv.Q8, diagnostics = TRUE)
+
+# Theta would be:
+beta2 <-  0.5965539 # Coefficient before PO/PN. beta3 in Porter
+alpha1 <- -0.703 # Coefficient before log(gr), same as earlier
+theta <- alpha1/(exp(beta2)) -alpha1
+```
+
 
 
 
